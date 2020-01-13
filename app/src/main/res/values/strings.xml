@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">3DScannerApp</string>
+    <string name="video_button">Video Record Button</string>
+</resources>
