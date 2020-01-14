@@ -4,22 +4,42 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <TextureView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/textureView"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true" />
 
-    <ImageButton
+    <Button
+        android:id="@+id/openVideoCaptureButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/videoOnlineImageButton"
-        android:contentDescription="@string/video_button"
-        android:src="@mipmap/btn_video_online_foreground"
-        android:layout_marginBottom="36dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:layout_marginEnd="49dp" />
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="246dp"
+        android:text="video Capture" />
+
+    <Button
+        android:id="@+id/openMultiCameraVideoCaptureButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/openVideoCaptureButton"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:text="Multi Camera Video Capture" />
+
+    <Button
+        android:id="@+id/openGalleryButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/openMultiCameraVideoCaptureButton"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:text="Gallery" />
+
+    <Button
+        android:id="@+id/openConfiguration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/openGalleryButton"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="30dp"
+        android:text="Configuration" />
+
 
 </RelativeLayout>
