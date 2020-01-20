@@ -35,6 +35,8 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
+import com.example.a3dscannerapp.imu.IMUSession;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -52,6 +54,8 @@ public class VideoCaptureActivity extends AppCompatActivity {
     private TextureView mTextureView;
     private ImageButton mRecordImageButton;
     private boolean mIsRecording = false;
+
+    private IMUSession mIMUSession;
 
     private static final int REQUEST_CAMERA_PERMISSION_RESULT = 0;
     private static final int REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION_RESULT = 1;
@@ -171,6 +175,8 @@ public class VideoCaptureActivity extends AppCompatActivity {
 
     private void startRecord() {
 
+        mIMUSession.startSession(mVideoFolder.getAbsolutePath());
+
         try {
             setupMediaRecorder();
             SurfaceTexture surfaceTexture = mTextureView.getSurfaceTexture();
@@ -232,9 +238,11 @@ public class VideoCaptureActivity extends AppCompatActivity {
                     mMediaRecorder.stop();
                     mMediaRecorder.reset();
 
+                    // store video data
                     Intent mediaStoreUpdateIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
                     mediaStoreUpdateIntent.setData(Uri.fromFile(new File(mVideoFileName)));
                     sendBroadcast(mediaStoreUpdateIntent);
+                    mIMUSession.stopSession();
 
                     startPreview();
                 } else {
@@ -253,6 +261,8 @@ public class VideoCaptureActivity extends AppCompatActivity {
                 }
             }
         });
+
+        mIMUSession = new IMUSession(this);
     }
 
     @Override
