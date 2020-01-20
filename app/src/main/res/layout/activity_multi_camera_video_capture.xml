@@ -1,9 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MultiCameraVideoCaptureActivity">
+    android:layout_height="match_parent">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+
+    <TableLayout
+        android:id="@+id/multiCamCaptureTable"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="200dp"
+        tools:layout_editor_absoluteX="16dp">
+        android:layout_marginBottom="100dp"
+
+    </TableLayout>
+
+    <ImageButton
+        android:id="@+id/multiCamVideoOnlineImageButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="79dp"
+        android:contentDescription="@string/video_button"
+        android:src="@mipmap/btn_video_online_foreground"
+        tools:layout_editor_absoluteX="279dp" />
+
+</RelativeLayout>
