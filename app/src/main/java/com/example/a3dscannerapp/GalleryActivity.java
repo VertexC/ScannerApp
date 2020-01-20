@@ -6,15 +6,19 @@ import com.example.a3dscannerapp.MainActivity;
 
 import android.app.ActionBar;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.Image;
 import android.media.MediaMetadataRetriever;
 import android.media.ThumbnailUtils;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -35,12 +39,18 @@ public class GalleryActivity extends AppCompatActivity {
     private String mAppFilesFolderName = MainActivity.appFilesFolderName;
 
     TableLayout mGalleryTable;
+    Intent mVideoPlayIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_gallery);
+
+
         mGalleryTable = (TableLayout) findViewById(R.id.galleryTable);
+        mVideoPlayIntent = new Intent(this, VideoPlayActivity.class);
+        mVideoPlayIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
         createGalleryRowThread.start();
     }
 
@@ -130,8 +140,15 @@ public class GalleryActivity extends AppCompatActivity {
                             TableRow.LayoutParams.WRAP_CONTENT);
                     lp.setMargins(5, 10, 5, 10);
                     row.setLayoutParams(lp);
-                    ImageView thumbnailView = new ImageView(GalleryActivity.this);
-                    thumbnailView.setImageBitmap(scaled_bitmap);
+                    ImageButton thumbnailBtn = new ImageButton(GalleryActivity.this);
+                    thumbnailBtn.setImageBitmap(scaled_bitmap);
+                    thumbnailBtn.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            mVideoPlayIntent.putExtra("videoUri", Uri.fromFile(videoFile).toString());
+                            startActivity(mVideoPlayIntent);
+                        }
+                    });
                     Button uploadButton = new Button(GalleryActivity.this);
                     uploadButton.setText("upload");
                     TextView descriptionText = new TextView(GalleryActivity.this);
@@ -143,13 +160,12 @@ public class GalleryActivity extends AppCompatActivity {
                     } catch (ParseException e) {
                         e.printStackTrace();
                     }
-                    row.addView(thumbnailView);
+                    row.addView(thumbnailBtn);
                     row.addView(descriptionText);
                     row.addView(uploadButton);
                     mGalleryTable.addView(row, lp);
                 }
             });
-
         }
     }
 }

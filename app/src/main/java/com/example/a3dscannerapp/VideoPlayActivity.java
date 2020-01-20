@@ -16,7 +16,7 @@ public class VideoPlayActivity extends AppCompatActivity {
         setContentView(R.layout.activity_video_play);
         mVideoView = findViewById(R.id.videoView);
 
-        Uri videoUri = Uri.parse(getIntent().getExtras().getString("videoUri"));
+        Uri videoUri = Uri.parse(getIntent().getStringExtra("videoUri"));
         mVideoView.setVideoURI(videoUri);
         mVideoView.start();
     }
