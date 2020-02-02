@@ -34,6 +34,8 @@ public class MainActivity extends AppCompatActivity {
         final Intent videoCaputureIntent = new Intent(this, VideoCaptureActivity.class);
         final Intent galleryIntent = new Intent(this, GalleryActivity.class);
         final Intent multiCamVideoCaptureIntent = new Intent(this, MultiCameraVideoCaptureActivity.class);
+        final Intent preferenceIntent = new Intent(this, PreferenceActivity.class);
+
 
         mOpenVideoCaptureButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -53,6 +55,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 startActivity(multiCamVideoCaptureIntent);
+            }
+        });
+
+        mOpenConfigurationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(preferenceIntent);
             }
         });
 

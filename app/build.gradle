@@ -1,6 +1,8 @@
 apply plugin: 'com.android.application'
 
 android {
+    targetCompatibility = "8"
+    sourceCompatibility = "8"
     compileSdkVersion 29
     buildToolsVersion "24.0.3"
     defaultConfig {
@@ -10,11 +12,18 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
     }
     buildTypes {
+        debug {
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        dexOptions {
+            // release & debug is in project animators
+            matchingFallbacks = ['release', 'debug']
         }
     }
 }
@@ -28,4 +37,14 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
 
     implementation 'com.github.wseemann:FFmpegMediaMetadataRetriever:1.0.14'
+
+    compile group: 'com.squareup.retrofit2', name: 'retrofit', version: '2.6.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.6.0'
+    implementation 'com.wealdtech.hawk:hawk-core:1.2.0'
+
+    implementation 'androidx.preference:preference:1.1.0-alpha01'
+
+    def lifecycle_version = "2.2.0"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycle_version"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
 }

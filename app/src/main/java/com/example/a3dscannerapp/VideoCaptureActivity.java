@@ -370,23 +370,6 @@ public class VideoCaptureActivity extends AppCompatActivity {
 
     }
 
-    public void uploadVideo(View view) {
-        // TODO: add option to config server IP
-        // TODO: add option to select video from default view
-        if (videoUri!=null){
-            String filePath = getFilePathFromContentUri(videoUri, this.getContentResolver());
-            int result = Util.upLoad2Server(filePath);
-            if (result==200) {
-                showToast("Video uploaded!");
-            } else {
-                showToast("Upload fails.");
-            }
-        }
-        else{
-            showToast("No video captured yet");
-        }
-    }
-
     /**
      * Gets the corresponding path to a file from the given content:// URI
      * @param selectedVideoUri The content:// URI to find the file path from
