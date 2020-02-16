@@ -81,7 +81,7 @@ public class Util {
         }
     }
 
-    public static void uploadFile_new(String filePath, String uploadUrl) throws IOException {
+    public static void uploadFile_new(String filePath, String uploadUrl, String description) throws IOException {
         // create upload service client
         trustAllCertificates();
         ServiceGenerator generator = new ServiceGenerator();
@@ -173,6 +173,5 @@ public class Util {
             Arrays.sort(choices,new CompareSizeByArea());
             return choices[0];
         }
-
     }
 }

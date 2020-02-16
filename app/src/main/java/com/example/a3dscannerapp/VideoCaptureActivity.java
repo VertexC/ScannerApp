@@ -3,11 +3,15 @@ package com.example.a3dscannerapp;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.SurfaceTexture;
@@ -18,6 +22,8 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.location.Location;
+import android.location.LocationManager;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
@@ -26,20 +32,33 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.provider.MediaStore;
+import android.provider.Settings;
+import android.text.InputType;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
+import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.example.a3dscannerapp.imu.IMUSession;
 
+import org.json.JSONException;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
@@ -48,8 +67,6 @@ public class VideoCaptureActivity extends AppCompatActivity {
 
     private static final String TAG = "scanAppActivity";
     private static int VIDEO_REQUEST = 101;
-    private Uri videoUri = null;
-
 
     private TextureView mTextureView;
     private ImageButton mRecordImageButton;
@@ -59,6 +76,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
 
     private static final int REQUEST_CAMERA_PERMISSION_RESULT = 0;
     private static final int REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION_RESULT = 1;
+    private static final int REQUEST_ACCESS_FINE_LOCATION_PERMISSION_RESULT = 2;
     // FIXME: extend it for multiple cameras
     private String mCameraId;
     // FIXME: what is mPreviewSize for
@@ -71,8 +89,10 @@ public class VideoCaptureActivity extends AppCompatActivity {
 
     private File mAppFilesFolder;
     private String mAppFilesFolderName = MainActivity.appFilesFolderName;
-    private File mVideoFolder;
+    private String mScanFolderName;
+    private File mScanFolder;
     private String mVideoFileName;
+    private String mMetaDataFileName;
 
     private static SparseIntArray ORIENTATIONS = new SparseIntArray();
     static {
@@ -120,6 +140,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+//                askForInputAndStartRecord();
                 startRecord();
                 mMediaRecorder.start();
             } else {
@@ -173,9 +194,156 @@ public class VideoCaptureActivity extends AppCompatActivity {
         }
     }
 
-    private void startRecord() {
 
-        mIMUSession.startSession(mVideoFolder.getAbsolutePath());
+    class PromptRunnable implements Runnable {
+        public String sceneType="";
+        public String description="";
+        public void run() {
+            this.run();
+        }
+    }
+
+
+    void promptForResult(final PromptRunnable postrun) {
+
+        postrun.description = "";
+        postrun.sceneType = "";
+
+        final AlertDialog.Builder desBuilder = new AlertDialog.Builder(this);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        final EditText input = new EditText(VideoCaptureActivity.this);
+        input.setLayoutParams(lp);
+        desBuilder.setTitle("Add description")
+                .setView(input);
+        desBuilder.create();
+        desBuilder.setPositiveButton("DONE", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                postrun.description = input.getText().toString();
+                Toast.makeText(getApplicationContext(), "SceneType:" + postrun.sceneType, Toast.LENGTH_SHORT).show();
+                postrun.run();
+            }
+        });
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Select ScenceType");
+        final String[] sceneTypes = getResources().getStringArray(R.array.sceneType);
+        builder.setSingleChoiceItems((CharSequence[])sceneTypes, -1, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                postrun.sceneType = sceneTypes[which];
+                dialog.dismiss();
+                desBuilder.show();
+            }
+        });
+//        builder.setPositiveButton("DONE", new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialogInterface, int i) {
+////                postrun.description = input.getText().toString();
+//                Toast.makeText(getApplicationContext(), "SceneType:" + postrun.sceneType, Toast.LENGTH_SHORT).show();
+//                desBuilder.show();
+//            }
+//        });
+        builder.show();
+    }
+
+    private void askForInputAndStartRecord() {
+        promptForResult(new PromptRunnable(){
+            public void run() {
+                if(!this.description.equals("") && !this.sceneType.equals("")) {
+                    mIsRecording = true;
+                    mRecordImageButton.setImageResource(R.mipmap.btn_video_offline_foreground);
+                    saveMetaData(this.description, this.sceneType);
+                    startRecord();
+                    mMediaRecorder.start();
+                }
+                else {
+                    Toast.makeText(getApplicationContext(),
+                            "Please select sceneType and input your description",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+
+    private void saveMetaData(String description, String sceneType) {
+        //First Employee
+        JSONObject root = new JSONObject();
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(VideoCaptureActivity.this);
+        JSONObject device = new JSONObject();
+        device.put("id", Settings.Secure.getString(VideoCaptureActivity.this.getContentResolver(),
+                Settings.Secure.ANDROID_ID));
+
+        String manufacturer = Build.MANUFACTURER;
+        String model = Build.MODEL;
+        if (model.toLowerCase().startsWith(manufacturer.toLowerCase())) {
+            device.put("type", manufacturer + " " + model);
+        } else {
+            device.put("type", model);
+        }
+
+
+
+
+        device.put("name", preferences.getString("device_type", ""));
+        root.put("device", device);
+
+        JSONObject user = new JSONObject();
+        user.put("name", preferences.getString("name", ""));
+
+        JSONObject scene = new JSONObject();
+        scene.put("description", description);
+        scene.put("sceneType", sceneType);
+
+        JSONObject gps = new JSONObject();
+        scene.put("gps", gps);
+        LocationManager locationManager = (LocationManager)
+                getSystemService(Context.LOCATION_SERVICE);
+        try {
+            if(checkLocationPermission()){
+                Location locationGPS = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                if (locationGPS != null) {
+                    scene.put("gps",  new ArrayList<>(Arrays.asList(locationGPS.getLatitude(), locationGPS.getLongitude())));
+                }
+                else {
+                    scene.put("gps", null);
+                }
+            }
+            else {
+                scene.put("gps", null);
+            }
+
+        }
+        catch (SecurityException e) {
+            scene.put("gps", null);
+            e.printStackTrace();
+        }
+        root.put("scene", scene);
+
+//        //Add employees to list
+//        JSONArray employeeList = new JSONArray();
+//        employeeList.add(employeeObject);
+//        employeeList.add(employeeObject2);
+//
+//        root.put("employeeList", employeeList);
+
+        //Write JSON file
+        try {
+            File metaDataFile = File.createTempFile(mScanFolderName, ".txt", mScanFolder);
+            FileWriter file = new FileWriter(new File(metaDataFile.getAbsolutePath()));
+            file.write(root.toJSONString());
+            file.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void startRecord() {
+        mIMUSession.startSession(mScanFolder.getAbsolutePath());
 
         try {
             setupMediaRecorder();
@@ -248,11 +416,10 @@ public class VideoCaptureActivity extends AppCompatActivity {
                 } else {
                     try {
                         if (checkWriteStoragePermission()) {
-                            mIsRecording = true;
-                            mRecordImageButton.setImageResource(R.mipmap.btn_video_offline_foreground);
 
-                            startRecord();
-                            mMediaRecorder.start();
+                            askForInputAndStartRecord();
+                            // startRecord();
+//                            mMediaRecorder.start();
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -345,8 +512,6 @@ public class VideoCaptureActivity extends AppCompatActivity {
     }
 
     private void connectCamera() {
-        // FIXME: how to do multiple
-        // FIXME: what does context means in android
         CameraManager cameraManager = (CameraManager)getSystemService(Context.CAMERA_SERVICE);
         try {
             // FIXME: what is this?
@@ -389,15 +554,6 @@ public class VideoCaptureActivity extends AppCompatActivity {
         cursor.close();
         return filePath;
     }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode==VIDEO_REQUEST && resultCode==RESULT_OK){
-            videoUri = data.getData();
-
-        }
-    }
-
 
     public void showToast(final String text) {
         runOnUiThread(new Runnable() {
@@ -477,9 +633,10 @@ public class VideoCaptureActivity extends AppCompatActivity {
 
     public void createVideoFolder() {
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        mVideoFolder = new File(mAppFilesFolder, "scan_at_" + timestamp + "_");
-        if(!mVideoFolder.exists()) {
-            mVideoFolder.mkdirs();
+        mScanFolderName = timestamp + "_" + Settings.Secure.ANDROID_ID;
+        mScanFolder = new File(mAppFilesFolder, mScanFolderName);
+        if(!mScanFolder.exists()) {
+            mScanFolder.mkdirs();
         }
     }
 
@@ -487,9 +644,24 @@ public class VideoCaptureActivity extends AppCompatActivity {
         // FIXME: add unique prefix in the configuration
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String prepend = "VIDEO_" + timestamp + "_";
-        File videoFile = File.createTempFile(prepend, ".mp4", mVideoFolder);
+        File videoFile = File.createTempFile(mScanFolderName, ".mp4", mScanFolder);
         mVideoFileName = videoFile.getAbsolutePath();
         return videoFile;
+    }
+
+    private boolean checkLocationPermission() {
+        if(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else {
+            if(shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION))
+            {
+                showToast("app needs to get gps information");
+            }
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_ACCESS_FINE_LOCATION_PERMISSION_RESULT);
+            return false;
+        }
     }
 
     private boolean checkWriteStoragePermission() throws IOException {
@@ -510,7 +682,6 @@ public class VideoCaptureActivity extends AppCompatActivity {
                         REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION_RESULT);
                 return false;
             }
-
         } else {
 //            mIsRecording = true;
 //            mRecordImageButton.setImageResource(R.mipmap.btn_video_offline_foreground);
