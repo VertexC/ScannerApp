@@ -285,9 +285,6 @@ public class VideoCaptureActivity extends AppCompatActivity {
             device.put("type", model);
         }
 
-
-
-
         device.put("name", preferences.getString("device_type", ""));
         root.put("device", device);
 
@@ -343,7 +340,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
 
 
     private void startRecord() {
-        mIMUSession.startSession(mScanFolder.getAbsolutePath());
+        mIMUSession.startSession(mScanFolder.getAbsolutePath(), mScanFolderName);
 
         try {
             setupMediaRecorder();

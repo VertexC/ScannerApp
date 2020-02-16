@@ -101,22 +101,22 @@ public class IMUSession implements SensorEventListener {
         return mAcceBias;
     }
 
-    public void startSession(String streamFolder){
+    public void startSession(String streamFolder, final String scanFolderName){
         if (streamFolder != null){
             mFileStreamer = new FileStreamer(mContext, streamFolder);
             try {
-                mFileStreamer.addFile("gyro", "gyro.txt");
-                mFileStreamer.addFile("gyro_uncalib", "gyro_uncalib.txt");
-                mFileStreamer.addFile("acce", "acce.txt");
-                mFileStreamer.addFile("linacce", "linacce.txt");
-                mFileStreamer.addFile("gravity", "gravity.txt");
-                mFileStreamer.addFile("magnet", "magnet.txt");
-                mFileStreamer.addFile("rv", "rv.txt");
-                mFileStreamer.addFile("game_rv", "game_rv.txt");
-                mFileStreamer.addFile("magnetic_rv", "magnetic_rv.txt");
-                mFileStreamer.addFile("step", "step.txt");
-                mFileStreamer.addFile("pressure", "pressure.txt");
-                mFileStreamer.addFile("gyro_bias", "gyro_bias.txt");
+                mFileStreamer.addFile("gyro", scanFolderName + ".rot");
+//                mFileStreamer.addFile("gyro_uncalib", "gyro_uncalib.txt");
+                mFileStreamer.addFile("acce", scanFolderName + ".acce");
+//                mFileStreamer.addFile("linacce", "linacce.txt");
+                mFileStreamer.addFile("gravity", scanFolderName + ".grav");
+                mFileStreamer.addFile("magnet", scanFolderName + ".magnet");
+//                mFileStreamer.addFile("rv", "rv.txt");
+                mFileStreamer.addFile("game_rv", "game_rv.atti");
+//                mFileStreamer.addFile("magnetic_rv", "magnetic_rv.txt");
+//                mFileStreamer.addFile("step", "step.txt");
+//                mFileStreamer.addFile("pressure", "pressure.txt");
+//                mFileStreamer.addFile("gyro_bias", "gyro_bias.txt");
                 mIsWritingFile.set(true);
             } catch (IOException e){
                 mContext.showToast("Error occurs when creating output IMU files.");

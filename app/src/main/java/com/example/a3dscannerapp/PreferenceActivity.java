@@ -34,10 +34,20 @@ public class PreferenceActivity extends AppCompatActivity {
                     String url = prefs.getString("uploadUrl", "");
                     mUploadUrlPreference.setSummary(url);
                 }
+                if(key.equals("device_name")) {
+                    String device_name = prefs.getString("device_name", "");
+                    mDeviceNamePreference.setSummary(device_name);
+                }
+                if(key.equals("user_name")) {
+                    String user_name = prefs.getString("user_name", "");
+                    mUserNamePreference.setSummary(user_name);
+                }
             }
         };
 
         EditTextPreference mUploadUrlPreference;
+        EditTextPreference mDeviceNamePreference;
+        EditTextPreference mUserNamePreference;
         Preference mFeedbackPreference;
 
         @Override
@@ -48,10 +58,22 @@ public class PreferenceActivity extends AppCompatActivity {
             SharedPreferences preferences = getPreferenceManager().getSharedPreferences();
 
             mUploadUrlPreference = new EditTextPreference(context);
-            String url = preferences.getString("uploadUrl", "");
+            String url = preferences.getString("uploadUrl", "e.g. http://aspis.cmpt.sfu.ca/multiscan/upload");
             mUploadUrlPreference.setKey("uploadUrl");
-            mUploadUrlPreference.setTitle("Full Url for file upload");
+            mUploadUrlPreference.setTitle("Full Url for file upload(*)");
             mUploadUrlPreference.setSummary(url);
+
+            mDeviceNamePreference = new EditTextPreference(context);
+            String device_name = preferences.getString("device_name", "e.g. One Plus 6T");
+            mDeviceNamePreference.setKey("device_name");
+            mDeviceNamePreference.setTitle("Device Name(*)");
+            mDeviceNamePreference.setSummary(device_name);
+
+            mUserNamePreference = new EditTextPreference(context);
+            String user_name = preferences.getString("user_name", "e.g. Bowen Chen");
+            mUserNamePreference.setKey("user_name");
+            mUserNamePreference.setTitle("User Name(*)");
+            mUserNamePreference.setSummary(user_name);
 
 
             mFeedbackPreference = new Preference(context);
@@ -60,6 +82,8 @@ public class PreferenceActivity extends AppCompatActivity {
             mFeedbackPreference.setSummary("Report technical issues or suggest new features");
 
             screen.addPreference(mUploadUrlPreference);
+            screen.addPreference(mDeviceNamePreference);
+            screen.addPreference(mUserNamePreference);
             screen.addPreference(mFeedbackPreference);
 
             setPreferenceScreen(screen);

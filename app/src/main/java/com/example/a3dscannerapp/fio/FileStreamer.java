@@ -9,12 +9,14 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.security.KeyException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Locale;
 
 public class FileStreamer {
+    private final static int SENSOR_BYTE_LENGTH = 8;
     private final static String LOG_TAG = FileStreamer.class.getSimpleName();
 
     private Context mContext;
@@ -66,9 +68,9 @@ public class FileStreamer {
                 throw new KeyException("File writer " + writerId + " not found");
             }
             StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append(timestamp);
+            stringBuilder.append(ByteBuffer.allocate(SENSOR_BYTE_LENGTH).putLong(timestamp).array().toString());
             for(int i=0; i<numValues; ++i){
-                stringBuilder.append(String.format(Locale.US, " %.6f", values[i]));
+                stringBuilder.append(ByteBuffer.allocate(SENSOR_BYTE_LENGTH).putFloat(values[i]).array().toString());
             }
             stringBuilder.append("\n");
             writer.write(stringBuilder.toString());
