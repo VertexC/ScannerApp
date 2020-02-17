@@ -37,6 +37,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URLConnection;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -107,16 +108,21 @@ public class GalleryActivity extends AppCompatActivity {
             if (appFilesFolder.exists()) {
                 for (File inFile1 : appFilesFolder.listFiles()) {
                     if (inFile1.isDirectory()) {
-                        File videoFile = null;
-                        for (File inFile2 : inFile1.listFiles()) {
-                            if (isVideoFile(inFile2.getAbsolutePath())) {
-                                videoFile = inFile2;
-                                break;
-                            }
+                        String folderName = inFile1.getName();
+                        File videoFile = new File(inFile1.getAbsolutePath(), folderName+".mp4");
+                        if(isVideoFile(videoFile.getAbsolutePath())){
+                            createGalleryRow(folderName, inFile1.getAbsolutePath());
                         }
-                        if (videoFile != null) {
-                            createGalleryRow(videoFile, appFilesFolder);
-                        }
+//                        File videoFile = null;
+//                        for (File inFile2 : inFile1.listFiles()) {
+//                            if (isVideoFile(inFile2.getAbsolutePath())) {
+//                                videoFile = inFile2;
+//                                break;
+//                            }
+//                        }
+//                        if (videoFile != null) {
+//                            createGalleryRow(videoFile, appFilesFolder);
+//                        }
                     }
                 }
             }
@@ -124,14 +130,12 @@ public class GalleryActivity extends AppCompatActivity {
     };
 
 
-    public void createGalleryRow(final File videoFile, final File appFilesFolder) {
-        TableLayout tl = (TableLayout) findViewById(R.id.galleryTable);
+    public void createGalleryRow(String folderName, final String folderPath) {
+//        TableLayout tl = (TableLayout) findViewById(R.id.galleryTable);
         Bitmap bitmap = null;
-
+        final File videoFile = new File(folderPath, folderName+".mp4");
         try {
             bitmap = retrieveVideoFrameFromVideo(videoFile.getAbsolutePath());
-            //                            bitmap = ThumbnailUtils.createVideoThumbnail(videoFile.getAbsolutePath(),
-            //                                    MediaStore.Images.Thumbnails.MINI_KIND);
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -156,48 +160,38 @@ public class GalleryActivity extends AppCompatActivity {
                             startActivity(mVideoPlayIntent);
                         }
                     });
-
+                    String[] filesToUpload = {".txt", ".mp4", ".acce", ".rot", ".grav", ".mag"};
                     Button uploadButton = new Button(GalleryActivity.this);
                     uploadButton.setText("upload");
                     uploadButton.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
+                        Thread thread = new Thread() {
+                            @Override
+                            public void run() {
+                                try {
+                                    File gpxfile = new File(folderPath, "bowenc_test02.txt");
+                                    FileWriter writer = new FileWriter(gpxfile);
+                                    writer.append("test test");
+                                    writer.flush();
+                                    writer.close();
 
-
-//                            Util.upLoad2Server(videoFile.getAbsolutePath(), "10.0.2.2:5000/uploadVideo");
-//                            Util.uploadFile(videoFile.getAbsolutePath(), "https://10.0.2.2:5000", GalleryActivity.this);
-//                              Util.uploadFile_new(videoFile.getAbsolutePath(), "https://10.0.2.2:5000");
-//                            Util.uploadFile_new(videoFile.getAbsolutePath(), "http://aspis.cmpt.sfu.ca/multiscan/");
-                            Thread thread = new Thread() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        File gpxfile = new File(appFilesFolder, "bowenc_test01.txt");
-                                        FileWriter writer = new FileWriter(gpxfile);
-                                        writer.append("test test");
-                                        writer.flush();
-                                        writer.close();
-                                        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(GalleryActivity.this);
-                                        String url = preferences.getString("uploadUrl", "");
-//                                        Util.uploadFile_new(gpxfile.getAbsolutePath(), "http://aspis.cmpt.sfu.ca/");
-//                                        Util.uploadFile_new(gpxfile.getAbsolutePath(), "http://aspis.cmpt.sfu.ca/multiscan/upload");
-                                        Util.uploadFile_new(gpxfile.getAbsolutePath(), url, mDescriptionText);
-//                                        Util.uploadFile_new(gpxfile.getAbsolutePath(), "http://10.0.2.2:5000");
-
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
+                                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(GalleryActivity.this);
+                                    String url = preferences.getString("uploadUrl", "");
+                                    Util.uploadFile_new(gpxfile.getAbsolutePath(), url, mDescriptionText);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
                                 }
-                            };
-                            thread.start();
+                            }
+                        };
+                        thread.start();
                         }
                     });
 
-                    // TODO: add upload functionality
                     TextView descriptionText = new TextView(GalleryActivity.this);
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
                     try {
-                        Date d = sdf.parse(videoFile.getName().substring(6, 21));
+                        Date d = sdf.parse(videoFile.getName().substring(0, 15));
                         sdf.applyPattern("yyyy-MM-dd HH:mm:ss");
                         descriptionText.setText("Time: " + sdf.format(d));
                     } catch (ParseException e) {

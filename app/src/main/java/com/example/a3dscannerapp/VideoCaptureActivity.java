@@ -24,8 +24,10 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.location.Location;
 import android.location.LocationManager;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaRecorder;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -62,6 +64,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 
 public class VideoCaptureActivity extends AppCompatActivity {
 
@@ -73,6 +76,8 @@ public class VideoCaptureActivity extends AppCompatActivity {
     private boolean mIsRecording = false;
 
     private IMUSession mIMUSession;
+    private String mDescription;
+    private String mSceneType;
 
     private static final int REQUEST_CAMERA_PERMISSION_RESULT = 0;
     private static final int REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION_RESULT = 1;
@@ -86,13 +91,16 @@ public class VideoCaptureActivity extends AppCompatActivity {
     private CaptureRequest.Builder mCaptureRequestBuilder;
 
     private int mTotalRotation;
+    private int mBitRate = 500000;
+    private int mFrameRate = 60;
 
     private File mAppFilesFolder;
     private String mAppFilesFolderName = MainActivity.appFilesFolderName;
     private String mScanFolderName;
     private File mScanFolder;
-    private String mVideoFileName;
+    private String mVideoFilePath;
     private String mMetaDataFileName;
+
 
     private static SparseIntArray ORIENTATIONS = new SparseIntArray();
     static {
@@ -100,6 +108,59 @@ public class VideoCaptureActivity extends AppCompatActivity {
         ORIENTATIONS.append(Surface.ROTATION_90, 90);
         ORIENTATIONS.append(Surface.ROTATION_180, 180);
         ORIENTATIONS.append(Surface.ROTATION_270, 270);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_video_capture);
+
+        createAppFilesFolder();
+
+        mMediaRecorder = new MediaRecorder();
+        mTextureView = (TextureView) findViewById(R.id.textureView);
+        mRecordImageButton = (ImageButton) findViewById(R.id.videoOnlineImageButton);
+        mRecordImageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mIsRecording) {
+                    mIsRecording = false;
+                    mRecordImageButton.setImageResource(R.mipmap.btn_video_online_foreground);
+                    mMediaRecorder.stop();
+                    mMediaRecorder.reset();
+                    mIMUSession.stopSession();
+
+//                    AsyncTask.execute(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            saveMetaData();
+//                        }
+//                    });
+
+                    // store video data
+                    Intent mediaStoreUpdateIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                    mediaStoreUpdateIntent.setData(Uri.fromFile(new File(mVideoFilePath)));
+                    sendBroadcast(mediaStoreUpdateIntent);
+
+                    startPreview();
+                    saveMetaData();
+                } else {
+                    try {
+                        if (checkWriteStoragePermission()) {
+
+                            askForInputAndStartRecord();
+                            // startRecord();
+//                            mMediaRecorder.start();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            }
+        });
+
+        mIMUSession = new IMUSession(this);
     }
 
 
@@ -134,16 +195,19 @@ public class VideoCaptureActivity extends AppCompatActivity {
         public void onOpened(@NonNull CameraDevice camera) {
             mCameraDevice = camera;
             showToast("Camera connection Made!");
-            if(mIsRecording) {
-                try {
-                    createVideoFileName();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-//                askForInputAndStartRecord();
-                startRecord();
-                mMediaRecorder.start();
-            } else {
+//            if(mIsRecording) {
+//                try {
+//                    createVideoFileName();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+////                askForInputAndStartRecord();
+//                startRecord();
+//                mMediaRecorder.start();
+//            } else {
+//                startPreview();
+//            }
+            if(!mIsRecording) {
                 startPreview();
             }
         }
@@ -196,18 +260,14 @@ public class VideoCaptureActivity extends AppCompatActivity {
 
 
     class PromptRunnable implements Runnable {
-        public String sceneType="";
-        public String description="";
         public void run() {
             this.run();
         }
     }
 
-
     void promptForResult(final PromptRunnable postrun) {
-
-        postrun.description = "";
-        postrun.sceneType = "";
+        mDescription = "";
+        mSceneType = "";
 
         final AlertDialog.Builder desBuilder = new AlertDialog.Builder(this);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
@@ -221,8 +281,8 @@ public class VideoCaptureActivity extends AppCompatActivity {
         desBuilder.setPositiveButton("DONE", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                postrun.description = input.getText().toString();
-                Toast.makeText(getApplicationContext(), "SceneType:" + postrun.sceneType, Toast.LENGTH_SHORT).show();
+                mDescription = input.getText().toString();
+                Toast.makeText(getApplicationContext(), "SceneType:" + mSceneType, Toast.LENGTH_SHORT).show();
                 postrun.run();
             }
         });
@@ -233,31 +293,25 @@ public class VideoCaptureActivity extends AppCompatActivity {
         builder.setSingleChoiceItems((CharSequence[])sceneTypes, -1, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                postrun.sceneType = sceneTypes[which];
+                mSceneType = sceneTypes[which];
                 dialog.dismiss();
                 desBuilder.show();
             }
         });
-//        builder.setPositiveButton("DONE", new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialogInterface, int i) {
-////                postrun.description = input.getText().toString();
-//                Toast.makeText(getApplicationContext(), "SceneType:" + postrun.sceneType, Toast.LENGTH_SHORT).show();
-//                desBuilder.show();
-//            }
-//        });
+
         builder.show();
     }
 
     private void askForInputAndStartRecord() {
         promptForResult(new PromptRunnable(){
             public void run() {
-                if(!this.description.equals("") && !this.sceneType.equals("")) {
+                if(!mDescription.equals("") && !mSceneType.equals("")) {
                     mIsRecording = true;
                     mRecordImageButton.setImageResource(R.mipmap.btn_video_offline_foreground);
-                    saveMetaData(this.description, this.sceneType);
                     startRecord();
                     mMediaRecorder.start();
+
+
                 }
                 else {
                     Toast.makeText(getApplicationContext(),
@@ -268,8 +322,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
         });
     }
 
-    private void saveMetaData(String description, String sceneType) {
-        //First Employee
+    private void saveMetaData() {
         JSONObject root = new JSONObject();
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(VideoCaptureActivity.this);
@@ -279,7 +332,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
 
         String manufacturer = Build.MANUFACTURER;
         String model = Build.MODEL;
-        if (model.toLowerCase().startsWith(manufacturer.toLowerCase())) {
+        if (!model.toLowerCase().startsWith(manufacturer.toLowerCase())) {
             device.put("type", manufacturer + " " + model);
         } else {
             device.put("type", model);
@@ -292,11 +345,9 @@ public class VideoCaptureActivity extends AppCompatActivity {
         user.put("name", preferences.getString("name", ""));
 
         JSONObject scene = new JSONObject();
-        scene.put("description", description);
-        scene.put("sceneType", sceneType);
+        scene.put("description", mDescription);
+        scene.put("sceneType", mSceneType);
 
-        JSONObject gps = new JSONObject();
-        scene.put("gps", gps);
         LocationManager locationManager = (LocationManager)
                 getSystemService(Context.LOCATION_SERVICE);
         try {
@@ -312,7 +363,6 @@ public class VideoCaptureActivity extends AppCompatActivity {
             else {
                 scene.put("gps", null);
             }
-
         }
         catch (SecurityException e) {
             scene.put("gps", null);
@@ -320,16 +370,59 @@ public class VideoCaptureActivity extends AppCompatActivity {
         }
         root.put("scene", scene);
 
-//        //Add employees to list
-//        JSONArray employeeList = new JSONArray();
-//        employeeList.add(employeeObject);
-//        employeeList.add(employeeObject2);
-//
-//        root.put("employeeList", employeeList);
+        JSONArray sensors = new JSONArray();
+        //get origin video info
+        JSONObject sensor_camera = new JSONObject();
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        retriever.setDataSource(mVideoFilePath);
+        String videoWidth = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+        String videoHeight = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
+        String rotation = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+        String framecount = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_FRAME_COUNT);
+        String framerate = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_CAPTURE_FRAMERATE);
+        long duration = Long.valueOf(retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)) * 1000;
+        sensor_camera.put("id", "color_back_1");
+        sensor_camera.put("type", "color_camera");
+        sensor_camera.put("resolution", new ArrayList<>(Arrays.asList(videoWidth, videoHeight)));
+        sensor_camera.put("focal_length", "");
+        sensor_camera.put("principle_point", "");
+        sensor_camera.put("extrinsics_matrix", "");
+        sensor_camera.put("encoding", "h264");
+        sensor_camera.put("num_frames", framecount);
+        sensor_camera.put("frequency", mFrameRate);
+        sensors.add(sensor_camera);
 
+        //get sensor info
+        JSONObject imuSensor = new JSONObject();
+        float frequency = mIMUSession.mFrequency;
+
+        HashMap<String, String> imuTypeMap = new HashMap<>();
+        imuTypeMap.put("gyro", "rotation");
+        imuTypeMap.put("acce", "accelerometer");
+        imuTypeMap.put("gravity", "gravity");
+        imuTypeMap.put("magnet", "magnet");
+        imuTypeMap.put("rv", "attitude");
+
+        HashMap<String, String> imuIdMap = new HashMap<>();
+        imuIdMap.put("gyro", "rot");
+        imuIdMap.put("acce", "acce");
+        imuIdMap.put("gravity", "grav");
+        imuIdMap.put("magnet", "mag");
+        imuIdMap.put("rv", "atti");
+
+        for (String name : imuTypeMap.keySet()) {
+            JSONObject imu = new JSONObject();
+            imu.put("num_frames", mIMUSession.mSensorCounter.get(name));
+            imu.put("freqeuncy", mIMUSession.mFrequency);
+            imu.put("id", imuIdMap.get(name)+"_1");
+            imu.put("type", imuTypeMap.get(name)+"_1");
+            sensors.add(imu);
+
+        }
+        root.put("stream", sensors);
         //Write JSON file
         try {
-            File metaDataFile = File.createTempFile(mScanFolderName, ".txt", mScanFolder);
+            File metaDataFile = new File(mScanFolder, mScanFolderName+".txt");
             FileWriter file = new FileWriter(new File(metaDataFile.getAbsolutePath()));
             file.write(root.toJSONString());
             file.flush();
@@ -338,6 +431,8 @@ public class VideoCaptureActivity extends AppCompatActivity {
         }
     }
 
+    private void stopRecord() {
+    }
 
     private void startRecord() {
         mIMUSession.startSession(mScanFolder.getAbsolutePath(), mScanFolderName);
@@ -384,50 +479,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_video_capture);
 
-        createAppFilesFolder();
-
-        mMediaRecorder = new MediaRecorder();
-        mTextureView = (TextureView) findViewById(R.id.textureView); // FIXME: why find by id? no id setted
-        mRecordImageButton = (ImageButton) findViewById(R.id.videoOnlineImageButton);
-        mRecordImageButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(mIsRecording) {
-                    mIsRecording = false;
-                    mRecordImageButton.setImageResource(R.mipmap.btn_video_online_foreground);
-                    mMediaRecorder.stop();
-                    mMediaRecorder.reset();
-
-                    // store video data
-                    Intent mediaStoreUpdateIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                    mediaStoreUpdateIntent.setData(Uri.fromFile(new File(mVideoFileName)));
-                    sendBroadcast(mediaStoreUpdateIntent);
-                    mIMUSession.stopSession();
-
-                    startPreview();
-                } else {
-                    try {
-                        if (checkWriteStoragePermission()) {
-
-                            askForInputAndStartRecord();
-                            // startRecord();
-//                            mMediaRecorder.start();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            }
-        });
-
-        mIMUSession = new IMUSession(this);
-    }
 
     @Override
     protected void onResume() {
@@ -463,13 +515,10 @@ public class VideoCaptureActivity extends AppCompatActivity {
         }
         if(requestCode == REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION_RESULT) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                mIsRecording = true;
-                mRecordImageButton.setImageResource(R.mipmap.btn_video_offline_foreground);
-                try {
-                    createVideoFileName();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+//                mIsRecording = true;
+//                mRecordImageButton.setImageResource(R.mipmap.btn_video_offline_foreground);
+                createAppFilesFolder();
+                createVideoFileName();
                 showToast("Write external storage permission granted!");
             } else {
                 showToast("Application will not run without writing external storage!");
@@ -486,9 +535,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
                         cameraCharacteristics.LENS_FACING_FRONT) {
                     continue;
                 }
-                // FIXME: what this?
                 StreamConfigurationMap map = cameraCharacteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-                // FIXME: why rotation matters here?
                 int deviceOrientation = getWindowManager().getDefaultDisplay().getRotation();
                 mTotalRotation = sensorToDeviceRotation(cameraCharacteristics, deviceOrientation);
                 boolean swapRotation = mTotalRotation == 90 || mTotalRotation == 270;
@@ -630,19 +677,18 @@ public class VideoCaptureActivity extends AppCompatActivity {
 
     public void createVideoFolder() {
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        mScanFolderName = timestamp + "_" + Settings.Secure.ANDROID_ID;
+        mScanFolderName = timestamp + "_" + Settings.Secure.getString(VideoCaptureActivity.this.getContentResolver(),
+                Settings.Secure.ANDROID_ID);
         mScanFolder = new File(mAppFilesFolder, mScanFolderName);
         if(!mScanFolder.exists()) {
             mScanFolder.mkdirs();
         }
     }
 
-    private File createVideoFileName() throws IOException {
+    private File createVideoFileName() {
         // FIXME: add unique prefix in the configuration
-        String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String prepend = "VIDEO_" + timestamp + "_";
-        File videoFile = File.createTempFile(mScanFolderName, ".mp4", mScanFolder);
-        mVideoFileName = videoFile.getAbsolutePath();
+        File videoFile = new File(mScanFolder, mScanFolderName+".mp4");
+        mVideoFilePath = videoFile.getAbsolutePath();
         return videoFile;
     }
 
@@ -697,13 +743,13 @@ public class VideoCaptureActivity extends AppCompatActivity {
 
 
         // FIXME: what is encoding bitrate and frame rate
-        mMediaRecorder.setVideoEncodingBitRate(1000000);
+        mMediaRecorder.setVideoEncodingBitRate(mBitRate);
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
 
         mMediaRecorder.setVideoSize(mVideoSize.getWidth(), mVideoSize.getHeight());
-        mMediaRecorder.setVideoFrameRate(30);
+        mMediaRecorder.setVideoFrameRate(mFrameRate);
 
-        mMediaRecorder.setOutputFile(mVideoFileName);
+        mMediaRecorder.setOutputFile(mVideoFilePath);
 
         // FIXME: what is totalRotation?
         mMediaRecorder.setOrientationHint(mTotalRotation);
