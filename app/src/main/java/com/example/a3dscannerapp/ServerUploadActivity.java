@@ -18,6 +18,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 
@@ -107,14 +112,11 @@ public class ServerUploadActivity extends AppCompatActivity {
         trustAllCertificates();
         ServiceGenerator generator = new ServiceGenerator();
 
-        try
-        {
+        try {
             URL url = new URL(uploadUrl);
             String baseUrl = url.getProtocol() + "://" + url.getHost();
             generator.setup(baseUrl);
-        }
-        catch (MalformedURLException e)
-        {
+        } catch (MalformedURLException e) {
             e.printStackTrace();
             return "Invalid Url!";
         }
@@ -126,10 +128,10 @@ public class ServerUploadActivity extends AppCompatActivity {
         // use the FileUtils to get the actual file by uri
         File file = new File(filePath);
         byte[] buf;
-        try{
+        try {
             InputStream in = new FileInputStream(file);
             buf = new byte[in.available()];
-            while (in.read(buf) != -1);
+            while (in.read(buf) != -1) ;
         } catch (IOException e) {
             return "Cannot read the file!";
         }
@@ -164,7 +166,95 @@ public class ServerUploadActivity extends AppCompatActivity {
         return "";
     }
 
-    void uploadAndShowProgress(final String [] filePathList) {
+    private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
+    public static String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for (int j = 0; j < bytes.length; j++) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
+            hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+
+
+    public String verifyFile(String filePath, String verifyUrl) {
+        ServiceGenerator generator = new ServiceGenerator();
+
+        try {
+            URL url = new URL(verifyUrl);
+            String baseUrl = url.getProtocol() + "://" + url.getHost();
+            generator.setup(baseUrl);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return "Invalid Url!";
+        }
+
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e){
+            e.printStackTrace();
+            return "No md5 algorithm found!";
+        }
+
+        DigestInputStream dis;
+        try {
+            InputStream is = Files.newInputStream(Paths.get(filePath));
+            dis = new DigestInputStream(is, md);
+            byte[] buf = new byte[dis.available()];
+            while (dis.read(buf) != -1) ;
+
+        } catch (IOException e) {
+            return "Cannot read the file!";
+        }
+        byte[] digest = md.digest();
+
+        ApiConfig service = generator.createService(ApiConfig.class);
+
+        // use the FileUtils to get the actual file by uri
+        File file = new File(filePath);
+        byte[] buf;
+        try {
+            InputStream in = new FileInputStream(file);
+            buf = new byte[in.available()];
+            while (in.read(buf) != -1) ;
+        } catch (IOException e) {
+            return "Cannot read the file!";
+        }
+
+//        // create RequestBody instance from file
+//        RequestBody requestBody =
+//                RequestBody.create(
+//                        MediaType.parse("application/octet-stream"),
+//                        buf
+//                );
+
+        // finally, execute the request
+        trustAllCertificates();
+
+        String hexCheckSum = bytesToHex(digest).toLowerCase();
+        Call<ResponseBody> call = service.verifyFullUrl(verifyUrl, new File(filePath).getName(),
+                hexCheckSum);
+
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call,
+                                   Response<ResponseBody> response) {
+                Log.v("Verify:", response.message());
+                mUploadStatus = UploadStatus.Success;
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.e("Verify error:", t.getMessage());
+                mUploadStatus = UploadStatus.Fail;
+            }
+        });
+        return "";
+    }
+
+    void uploadAndShowProgress(final String[] filePathList) {
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(ServerUploadActivity.this);
         final String url = preferences.getString("uploadUrl", "");
@@ -174,29 +264,29 @@ public class ServerUploadActivity extends AppCompatActivity {
         new Thread(new Runnable() {
             public void run() {
 
-                for(String filePath: filePathList) {
-                    mFileInfoView.setText("Uploading:"+ new File(filePath).getName());
+                for (String filePath : filePathList) {
+                    mFileInfoView.setText("Uploading:" + new File(filePath).getName());
                     mUploadStatus = UploadStatus.Init;
                     String response;
 
                     response = uploadFile(filePath, url);
-                    if(!response.equals("")){
+                    if (!response.equals("")) {
                         // fail to upload
                         mResponseView.setText(response);
                         return;
                     }
 
                     long startTime = System.currentTimeMillis();
-                    while(mUploadStatus == UploadStatus.Init) {
+                    while (mUploadStatus == UploadStatus.Init) {
                         long endTime = System.currentTimeMillis();
                         long seconds = (endTime - startTime) / 1000;
-                        if (seconds > 60*60){
+                        if (seconds > 60 * 60) {
                             // upload time out
                             mResponseView.setText("Upload Time Out!");
                         }
                     } // wait for finish
 
-                    if(mUploadStatus == UploadStatus.Success) {
+                    if (mUploadStatus == UploadStatus.Success) {
                         // start next file
                     } else {
                         mResponseView.setText("Fail to upload");
@@ -216,8 +306,54 @@ public class ServerUploadActivity extends AppCompatActivity {
                     }
                 });
 
+                mFileInfoView.setText("Upload Done!");
+
+                // start verify
+                mProgressStatus = 0;
+                for (String filePath : filePathList) {
+                    mFileInfoView.setText("Verifying:" + new File(filePath).getName());
+                    mUploadStatus = UploadStatus.Init;
+                    String response;
+
+                    response = verifyFile(filePath, "http://aspis.cmpt.sfu.ca/multiscan/verify");
+                    if (!response.equals("")) {
+                        mResponseView.setText(response);
+                        return;
+                    }
+
+                    long startTime = System.currentTimeMillis();
+                    while (mUploadStatus == UploadStatus.Init) {
+                        long endTime = System.currentTimeMillis();
+                        long seconds = (endTime - startTime) / 1000;
+                        if (seconds > 60) {
+                            // upload time out
+                            mResponseView.setText("Verify Time Out!");
+                        }
+                    } // wait for finish
+
+                    if (mUploadStatus == UploadStatus.Success) {
+                        // start next file
+                    } else {
+                        mResponseView.setText("Fail to verify");
+                        return;
+                    }
+
+                    mHandler.post(new Runnable() {
+                        public void run() {
+                            mProgressStatus += perProgress;
+                            mProgress.setProgress(mProgressStatus);
+                        }
+                    });
+                }
+                mHandler.post(new Runnable() {
+                    public void run() {
+                        mProgressStatus += perProgress;
+                        mProgress.setProgress(mProgressStatus);
+                    }
+                });
             }
         }).start();
 
     }
+
 }

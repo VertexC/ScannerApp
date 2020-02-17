@@ -49,10 +49,6 @@ public class Util {
     public static final int REQUEST_CAMERA_PERMISSION_RESULT = 0;
     public static final int REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION_RESULT = 1;
 
-
-
-
-
     public static File createAppFilesFolder(String appFilesFolderName) {
         File movieFile = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         File appFilesFolder = new File(movieFile, appFilesFolderName);

@@ -40,6 +40,8 @@ import java.net.URLConnection;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -109,7 +111,27 @@ public class GalleryActivity extends AppCompatActivity {
             File movieFile = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
             File appFilesFolder = new File(movieFile, mAppFilesFolderName);
             if (appFilesFolder.exists()) {
-                for (File inFile1 : appFilesFolder.listFiles()) {
+                File[] files = appFilesFolder.listFiles();
+//                Arrays.sort(files, new Comparator<File>(){
+//                    public int compare(File f1, File f2)
+//                    {
+//                        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+//                        try {
+//                            Date d1 = sdf.parse(f1.getName().substring(0, 15));
+//                            Date d2 = sdf.parse(f1.getName().substring(0, 15));
+//                            return d1.compareTo(d2);
+//                        }
+//                        catch (Exception e) {
+//                            e.printStackTrace();
+//                        }
+//                        return 0;
+//                    } });
+                Arrays.sort(files, new Comparator<File>(){
+                    public int compare(File f1, File f2)
+                    {
+                        return Long.valueOf(f2.lastModified()).compareTo(f1.lastModified());
+                    } });
+                for (File inFile1 : files) {
                     if (inFile1.isDirectory()) {
                         String folderName = inFile1.getName();
                         File videoFile = new File(inFile1.getAbsolutePath(), folderName+".mp4");
