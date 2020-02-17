@@ -51,6 +51,7 @@ public class GalleryActivity extends AppCompatActivity {
 
     TableLayout mGalleryTable;
     Intent mVideoPlayIntent;
+    Intent mServerUploadIntent;
     private String mDescriptionText = "";
 
     @Override
@@ -62,6 +63,8 @@ public class GalleryActivity extends AppCompatActivity {
         mGalleryTable = (TableLayout) findViewById(R.id.galleryTable);
         mVideoPlayIntent = new Intent(this, VideoPlayActivity.class);
         mVideoPlayIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+        mServerUploadIntent = new Intent(this, ServerUploadActivity.class);
 
         createGalleryRowThread.start();
     }
@@ -130,7 +133,7 @@ public class GalleryActivity extends AppCompatActivity {
     };
 
 
-    public void createGalleryRow(String folderName, final String folderPath) {
+    public void createGalleryRow(final String folderName, final String folderPath) {
 //        TableLayout tl = (TableLayout) findViewById(R.id.galleryTable);
         Bitmap bitmap = null;
         final File videoFile = new File(folderPath, folderName+".mp4");
@@ -160,31 +163,45 @@ public class GalleryActivity extends AppCompatActivity {
                             startActivity(mVideoPlayIntent);
                         }
                     });
-                    String[] filesToUpload = {".txt", ".mp4", ".acce", ".rot", ".grav", ".mag"};
+
                     Button uploadButton = new Button(GalleryActivity.this);
                     uploadButton.setText("upload");
                     uploadButton.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
-                        Thread thread = new Thread() {
-                            @Override
-                            public void run() {
-                                try {
-                                    File gpxfile = new File(folderPath, "bowenc_test02.txt");
-                                    FileWriter writer = new FileWriter(gpxfile);
-                                    writer.append("test test");
-                                    writer.flush();
-                                    writer.close();
-
-                                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(GalleryActivity.this);
-                                    String url = preferences.getString("uploadUrl", "");
-                                    Util.uploadFile_new(gpxfile.getAbsolutePath(), url, mDescriptionText);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
+                            String[] filesToUpload = {".txt", ".mp4", ".acce", ".rot", ".grav", ".mag"};
+                            int i = 0;
+                            for(String ext:filesToUpload) {
+                                File f = new File(folderPath, folderName+ext);
+                                if(!f.isFile()){
+                                    Toast.makeText(getApplicationContext(), f.getName() +" Not Exists!", Toast.LENGTH_SHORT).show();
+                                    return;
                                 }
+                                filesToUpload[i] = f.getAbsolutePath();
+                                i++;
                             }
-                        };
-                        thread.start();
+                            mServerUploadIntent.putExtra("fileList", filesToUpload);
+                            startActivity(mServerUploadIntent);
+//                        Thread thread = new Thread() {
+//                            @Override
+//                            public void run() {
+//                                try {
+//
+//                                    File gpxfile = new File(folderPath, "bowenc_test02.txt");
+//                                    FileWriter writer = new FileWriter(gpxfile);
+//                                    writer.append("test test");
+//                                    writer.flush();
+//                                    writer.close();
+//
+//                                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(GalleryActivity.this);
+//                                    String url = preferences.getString("uploadUrl", "");
+//                                    Util.uploadFile_new(gpxfile.getAbsolutePath(), url, mDescriptionText);
+//                                } catch (IOException e) {
+//                                    e.printStackTrace();
+//                                }
+//                            }
+//                        };
+//                        thread.start();
                         }
                     });
 

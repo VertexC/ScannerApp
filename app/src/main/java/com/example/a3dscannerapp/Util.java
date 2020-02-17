@@ -49,92 +49,9 @@ public class Util {
     public static final int REQUEST_CAMERA_PERMISSION_RESULT = 0;
     public static final int REQUEST_WRITE_EXTERNAL_STORAGE_PERMISSION_RESULT = 1;
 
-    public static void trustAllCertificates() {
-        try {
-            TrustManager[] trustAllCerts = new TrustManager[]{
-                    new X509TrustManager() {
-                        public X509Certificate[] getAcceptedIssuers() {
-                            X509Certificate[] myTrustedAnchors = new X509Certificate[0];
-                            return myTrustedAnchors;
-                        }
-
-                        @Override
-                        public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                        }
-
-                        @Override
-                        public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                        }
-                    }
-            };
-
-            SSLContext sc = SSLContext.getInstance("SSL");
-            sc.init(null, trustAllCerts, new SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-            HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
-                @Override
-                public boolean verify(String arg0, SSLSession arg1) {
-                    return true;
-                }
-            });
-        } catch (Exception e) {
-        }
-    }
-
-    public static void uploadFile_new(String filePath, String uploadUrl, String description) throws IOException {
-        // create upload service client
-        trustAllCertificates();
-        ServiceGenerator generator = new ServiceGenerator();
-
-        try
-        {
-            URL url = new URL(uploadUrl);
-            String baseUrl = url.getProtocol() + "://" + url.getHost();
-            generator.setup(baseUrl);
-        }
-        catch (MalformedURLException e)
-        {
-            e.printStackTrace();
-            return;
-        }
 
 
-        ApiConfig service = generator.createService(ApiConfig.class);
 
-        // https://github.com/iPaulPro/aFileChooser/blob/master/aFileChooser/src/com/ipaulpro/afilechooser/utils/FileUtils.java
-        // use the FileUtils to get the actual file by uri
-        File file = new File(filePath);
-
-        InputStream in = new FileInputStream(file);
-        byte[] buf;
-        buf = new byte[in.available()];
-        while (in.read(buf) != -1);
-
-        // create RequestBody instance from file
-        RequestBody requestBody =
-                RequestBody.create(
-                        MediaType.parse("application/octet-stream"),
-                        buf
-                );
-
-        // finally, execute the request
-        trustAllCertificates();
-//        Call<ResponseBody> call = service.upload(file.getName(), requestBody);
-        Call<ResponseBody> call = service.uploadFullUrl(uploadUrl, file.getName(), requestBody);
-
-        call.enqueue(new Callback<ResponseBody>() {
-            @Override
-            public void onResponse(Call<ResponseBody> call,
-                                   Response<ResponseBody> response) {
-                Log.v("Upload:", response.message());
-            }
-
-            @Override
-            public void onFailure(Call<ResponseBody> call, Throwable t) {
-                Log.e("Upload error:", t.getMessage());
-            }
-        });
-    }
 
     public static File createAppFilesFolder(String appFilesFolderName) {
         File movieFile = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);

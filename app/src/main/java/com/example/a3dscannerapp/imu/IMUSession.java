@@ -118,7 +118,7 @@ public class IMUSession implements SensorEventListener {
                 mFileStreamer.addFile("acce", scanFolderName + ".acce");
 //                mFileStreamer.addFile("linacce", "linacce.txt");
                 mFileStreamer.addFile("gravity", scanFolderName + ".grav");
-                mFileStreamer.addFile("magnet", scanFolderName + ".magnet");
+                mFileStreamer.addFile("magnet", scanFolderName + ".mag");
                 mFileStreamer.addFile("rv", scanFolderName + ".atti");
 //                mFileStreamer.addFile("game_rv", "game_rv.txt");
 //                mFileStreamer.addFile("magnetic_rv", "magnetic_rv.txt");
