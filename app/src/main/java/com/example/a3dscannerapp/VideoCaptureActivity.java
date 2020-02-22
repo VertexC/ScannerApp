@@ -84,6 +84,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
     private static final int REQUEST_ACCESS_FINE_LOCATION_PERMISSION_RESULT = 2;
     // FIXME: extend it for multiple cameras
     private String mCameraId;
+    private float[] mCameraLensIntrinsic;
     // FIXME: what is mPreviewSize for
     private Size mPreviewSize;
     private Size mVideoSize;
@@ -91,7 +92,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
     private CaptureRequest.Builder mCaptureRequestBuilder;
 
     private int mTotalRotation;
-    private int mBitRate = 500000;
+    private int mBitRate = 15000000;
     private int mFrameRate = 60;
 
     private File mAppFilesFolder;
@@ -338,11 +339,11 @@ public class VideoCaptureActivity extends AppCompatActivity {
             device.put("type", model);
         }
 
-        device.put("name", preferences.getString("device_type", ""));
+        device.put("name", preferences.getString("device_name", ""));
         root.put("device", device);
 
         JSONObject user = new JSONObject();
-        user.put("name", preferences.getString("name", ""));
+        user.put("name", preferences.getString("user_name", ""));
 
         JSONObject scene = new JSONObject();
         scene.put("description", mDescription);
@@ -384,18 +385,22 @@ public class VideoCaptureActivity extends AppCompatActivity {
         sensor_camera.put("id", "color_back_1");
         sensor_camera.put("type", "color_camera");
         sensor_camera.put("resolution", new ArrayList<>(Arrays.asList(videoWidth, videoHeight)));
-        sensor_camera.put("focal_length", "");
-        sensor_camera.put("principle_point", "");
-        sensor_camera.put("extrinsics_matrix", "");
+
+        if (mCameraLensIntrinsic != null) {
+            sensor_camera.put("focal_length", new ArrayList<>(Arrays.asList(mCameraLensIntrinsic[0], mCameraLensIntrinsic[1])));
+            sensor_camera.put("principle_point", new ArrayList<>(Arrays.asList(mCameraLensIntrinsic[2], mCameraLensIntrinsic[3])));
+        }
+        else {
+            sensor_camera.put("focal_length", null);
+            sensor_camera.put("principle_point", null);
+        }
+        sensor_camera.put("extrinsics_matrix", null);
         sensor_camera.put("encoding", "h264");
         sensor_camera.put("num_frames", framecount);
         sensor_camera.put("frequency", mFrameRate);
         sensors.add(sensor_camera);
 
         //get sensor info
-        JSONObject imuSensor = new JSONObject();
-        float frequency = mIMUSession.mFrequency;
-
         HashMap<String, String> imuTypeMap = new HashMap<>();
         imuTypeMap.put("gyro", "rotation");
         imuTypeMap.put("acce", "accelerometer");
@@ -548,6 +553,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
                 mPreviewSize = chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class), rotatedWidth, rotatedHeight);
                 mVideoSize = chooseOptimalSize(map.getOutputSizes(MediaRecorder.class), rotatedWidth, rotatedHeight);
                 mCameraId = cameraId;
+                mCameraLensIntrinsic = cameraCharacteristics.get(cameraCharacteristics.LENS_INTRINSIC_CALIBRATION);
                 return;
             }
         } catch (CameraAccessException e) {

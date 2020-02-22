@@ -23,7 +23,6 @@ public class PreferenceActivity extends AppCompatActivity {
                 .beginTransaction()
                 .replace(android.R.id.content, new MySettingsFragment())
                 .commit();
-
     }
 
     public static class MySettingsFragment extends PreferenceFragmentCompat {
