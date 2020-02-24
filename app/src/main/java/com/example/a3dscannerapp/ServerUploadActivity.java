@@ -351,6 +351,8 @@ public class ServerUploadActivity extends AppCompatActivity {
                         mProgress.setProgress(mProgressStatus);
                     }
                 });
+                mFileInfoView.setText("Verifying done:" );
+                mResponseView.setText("All files were uploaded successfully." );
             }
         }).start();
 
