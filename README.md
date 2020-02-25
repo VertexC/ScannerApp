@@ -1,7 +1,7 @@
 # ScannerApp
 This is the Android ScannerApp for ScanNet.
 
-<img src="https://drive.google.com/uc?export=view&id=1gIdwfQtow9zNpW9IwAZX1Mq2zaMPuymw" width="200"  />
+![demo](doc/demo.gif)
 
 ## Basic Functionality
 - Record scene video.
