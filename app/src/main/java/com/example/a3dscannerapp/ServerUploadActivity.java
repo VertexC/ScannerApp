@@ -257,7 +257,8 @@ public class ServerUploadActivity extends AppCompatActivity {
     void uploadAndShowProgress(final String[] filePathList) {
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(ServerUploadActivity.this);
-        final String url = preferences.getString("uploadUrl", "");
+//        final String url = preferences.getString("uploadUrl", "");
+        final String url = "http://aspis.cmpt.sfu.ca/multiscan/upload";
 
         mProgressStatus = 0;
         final int perProgress = 100 / filePathList.length;
@@ -351,8 +352,8 @@ public class ServerUploadActivity extends AppCompatActivity {
                         mProgress.setProgress(mProgressStatus);
                     }
                 });
-                mFileInfoView.setText("Verifying done:" );
-                mResponseView.setText("All files were uploaded successfully." );
+                mFileInfoView.setText("Verifying done:");
+                mResponseView.setText("All files were uploaded successfully.");
             }
         }).start();
 

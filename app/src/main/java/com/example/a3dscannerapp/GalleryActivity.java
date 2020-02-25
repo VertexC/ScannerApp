@@ -204,26 +204,6 @@ public class GalleryActivity extends AppCompatActivity {
                             }
                             mServerUploadIntent.putExtra("fileList", filesToUpload);
                             startActivity(mServerUploadIntent);
-//                        Thread thread = new Thread() {
-//                            @Override
-//                            public void run() {
-//                                try {
-//
-//                                    File gpxfile = new File(folderPath, "bowenc_test02.txt");
-//                                    FileWriter writer = new FileWriter(gpxfile);
-//                                    writer.append("test test");
-//                                    writer.flush();
-//                                    writer.close();
-//
-//                                    SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(GalleryActivity.this);
-//                                    String url = preferences.getString("uploadUrl", "");
-//                                    Util.uploadFile_new(gpxfile.getAbsolutePath(), url, mDescriptionText);
-//                                } catch (IOException e) {
-//                                    e.printStackTrace();
-//                                }
-//                            }
-//                        };
-//                        thread.start();
                         }
                     });
 

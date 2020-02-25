@@ -743,12 +743,9 @@ public class VideoCaptureActivity extends AppCompatActivity {
     }
 
     private void setupMediaRecorder() throws IOException {
-        // FIXME: what is mediaRecorder
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
         mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
 
-
-        // FIXME: what is encoding bitrate and frame rate
         mMediaRecorder.setVideoEncodingBitRate(mBitRate);
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
 
@@ -757,10 +754,8 @@ public class VideoCaptureActivity extends AppCompatActivity {
 
         mMediaRecorder.setOutputFile(mVideoFilePath);
 
-        // FIXME: what is totalRotation?
         mMediaRecorder.setOrientationHint(mTotalRotation);
         mMediaRecorder.prepare();
     }
 
 }
-

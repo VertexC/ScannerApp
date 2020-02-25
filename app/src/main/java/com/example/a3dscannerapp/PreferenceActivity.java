@@ -29,10 +29,10 @@ public class PreferenceActivity extends AppCompatActivity {
 
         SharedPreferences.OnSharedPreferenceChangeListener mPrefListener = new SharedPreferences.OnSharedPreferenceChangeListener(){
             public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
-                if(key.equals("uploadUrl")) {
-                    String url = prefs.getString("uploadUrl", "");
-                    mUploadUrlPreference.setSummary(url);
-                }
+//                if(key.equals("uploadUrl")) {
+//                    String url = prefs.getString("uploadUrl", "");
+//                    mUploadUrlPreference.setSummary(url);
+//                }
                 if(key.equals("device_name")) {
                     String device_name = prefs.getString("device_name", "");
                     mDeviceNamePreference.setSummary(device_name);
@@ -56,11 +56,11 @@ public class PreferenceActivity extends AppCompatActivity {
 
             SharedPreferences preferences = getPreferenceManager().getSharedPreferences();
 
-            mUploadUrlPreference = new EditTextPreference(context);
-            String url = preferences.getString("uploadUrl", "e.g. http://aspis.cmpt.sfu.ca/multiscan/upload");
-            mUploadUrlPreference.setKey("uploadUrl");
-            mUploadUrlPreference.setTitle("Full Url for file upload(*)");
-            mUploadUrlPreference.setSummary(url);
+//            mUploadUrlPreference = new EditTextPreference(context);
+//            String url = preferences.getString("uploadUrl", "e.g. http://aspis.cmpt.sfu.ca/multiscan/upload");
+//            mUploadUrlPreference.setKey("uploadUrl");
+//            mUploadUrlPreference.setTitle("Full Url for file upload(*)");
+//            mUploadUrlPreference.setSummary(url);
 
             mDeviceNamePreference = new EditTextPreference(context);
             String device_name = preferences.getString("device_name", "e.g. One Plus 6T");
@@ -78,9 +78,9 @@ public class PreferenceActivity extends AppCompatActivity {
             mFeedbackPreference = new Preference(context);
             mFeedbackPreference.setKey("feedback");
             mFeedbackPreference.setTitle("Send feedback");
-            mFeedbackPreference.setSummary("Report technical issues or suggest new features");
+            mFeedbackPreference.setSummary("Report technical issues or suggest new features on GitHub repo: https://github.com/VertexC/ScannerApp");
 
-            screen.addPreference(mUploadUrlPreference);
+//            screen.addPreference(mUploadUrlPreference);
             screen.addPreference(mDeviceNamePreference);
             screen.addPreference(mUserNamePreference);
             screen.addPreference(mFeedbackPreference);
