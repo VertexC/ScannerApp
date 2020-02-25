@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
         mOpenVideoCaptureButton = (Button)findViewById(R.id.openVideoCaptureButton);
         mOpenConfigurationButton = (Button)findViewById(R.id.openConfiguration);
         mOpenGalleryButton = (Button)findViewById(R.id.openGalleryButton);
-        mOpenMultiCamVideoCaptureButton = (Button)findViewById(R.id.openMultiCameraVideoCaptureButton);
+//        mOpenMultiCamVideoCaptureButton = (Button)findViewById(R.id.openMultiCameraVideoCaptureButton);
 
         final Intent videoCaputureIntent = new Intent(this, VideoCaptureActivity.class);
         final Intent galleryIntent = new Intent(this, GalleryActivity.class);

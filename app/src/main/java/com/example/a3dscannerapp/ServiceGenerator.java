@@ -2,8 +2,6 @@ package com.example.a3dscannerapp;
 
 import android.text.TextUtils;
 
-import com.wealdtech.hawk.HawkCredentials;
-
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.Credentials;

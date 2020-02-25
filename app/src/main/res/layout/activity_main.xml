@@ -14,20 +14,20 @@
         android:layout_marginTop="246dp"
         android:text="video Capture" />
 
-    <Button
-        android:id="@+id/openMultiCameraVideoCaptureButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/openVideoCaptureButton"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="30dp"
-        android:text="Multi Camera Video Capture" />
+<!--    <Button-->
+<!--        android:id="@+id/openMultiCameraVideoCaptureButton"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_below="@+id/openVideoCaptureButton"-->
+<!--        android:layout_centerHorizontal="true"-->
+<!--        android:layout_marginTop="30dp"-->
+<!--        android:text="Multi Camera Video Capture" />-->
 
     <Button
         android:id="@+id/openGalleryButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/openMultiCameraVideoCaptureButton"
+        android:layout_below="@+id/openVideoCaptureButton"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="30dp"
         android:text="Gallery" />
