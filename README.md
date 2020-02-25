@@ -1,7 +1,7 @@
 # ScannerApp
 This is the Android ScannerApp for ScanNet.
 
-![demo](doc/demo.gif)
+<img src="ezgif.com-video-to-gif.gif" width=200>
 
 ## Basic Functionality
 - Record scene video.
