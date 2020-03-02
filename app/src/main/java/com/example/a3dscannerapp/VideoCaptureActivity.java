@@ -344,6 +344,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
 
         JSONObject user = new JSONObject();
         user.put("name", preferences.getString("user_name", ""));
+        root.put("user", user);
 
         JSONObject scene = new JSONObject();
         scene.put("description", mDescription);
@@ -406,14 +407,14 @@ public class VideoCaptureActivity extends AppCompatActivity {
         imuTypeMap.put("acce", "accelerometer");
         imuTypeMap.put("gravity", "gravity");
         imuTypeMap.put("magnet", "magnet");
-        imuTypeMap.put("rv", "attitude");
+        imuTypeMap.put("orientation", "attitude");
 
         HashMap<String, String> imuIdMap = new HashMap<>();
         imuIdMap.put("gyro", "rot");
         imuIdMap.put("acce", "acce");
         imuIdMap.put("gravity", "grav");
         imuIdMap.put("magnet", "mag");
-        imuIdMap.put("rv", "atti");
+        imuIdMap.put("orientation", "atti");
 
         for (String name : imuTypeMap.keySet()) {
             JSONObject imu = new JSONObject();

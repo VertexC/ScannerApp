@@ -78,6 +78,7 @@ public class IMUSession implements SensorEventListener {
         mSensors.put("magnetic_rv", mSensorManager.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR));
         mSensors.put("step", mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER));
         mSensors.put("pressure", mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE));
+        mSensors.put("orientation", mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION));
         registerSensors();
     }
 
@@ -120,7 +121,9 @@ public class IMUSession implements SensorEventListener {
 //                mFileStreamer.addFile("linacce", "linacce.txt");
                 mFileStreamer.addFile("gravity", scanFolderName + ".grav");
                 mFileStreamer.addFile("magnet", scanFolderName + ".mag");
-                mFileStreamer.addFile("rv", scanFolderName + ".atti");
+//                mFileStreamer.addFile("rv", scanFolderName + ".atti");
+                mFileStreamer.addFile("orientation", scanFolderName + ".atti");
+
 //                mFileStreamer.addFile("game_rv", "game_rv.txt");
 //                mFileStreamer.addFile("magnetic_rv", "magnetic_rv.txt");
 //                mFileStreamer.addFile("step", "step.txt");
@@ -136,7 +139,9 @@ public class IMUSession implements SensorEventListener {
                 mSensorCounter.put("acce", 0);
                 mSensorCounter.put("gravity", 0);
                 mSensorCounter.put("magnet", 0);
-                mSensorCounter.put("rv", 0);
+//                mSensorCounter.put("rv", 0);
+                mSensorCounter.put("orientation", 0);
+
 
             } catch (IOException e){
                 mContext.showToast("Error occurs when creating output IMU files.");
@@ -232,10 +237,16 @@ public class IMUSession implements SensorEventListener {
 //
 //                    break;
 
-                case Sensor.TYPE_ROTATION_VECTOR:
+//                case Sensor.TYPE_ROTATION_VECTOR:
+//                    if (mIsRecording.get() && mIsWritingFile.get()) {
+//                        mFileStreamer.addRecord(timestamp, "rv", 4, event.values, "byte");
+//                        mSensorCounter.put("rv", mSensorCounter.get("rv") + 1);
+//                    }
+//                    break;
+                case Sensor.TYPE_ORIENTATION:
                     if (mIsRecording.get() && mIsWritingFile.get()) {
-                        mFileStreamer.addRecord(timestamp, "rv", 4, event.values, "byte");
-                        mSensorCounter.put("rv", mSensorCounter.get("rv") + 1);
+                        mFileStreamer.addRecord(timestamp, "orientation", 3, event.values, "byte");
+                        mSensorCounter.put("orientation", mSensorCounter.get("orientation") + 1);
                     }
                     break;
 
