@@ -114,6 +114,7 @@ public class IMUSession implements SensorEventListener {
             mFileStreamer = new FileStreamer(mContext, streamFolder);
             try {
                 mFileStreamer.addFile("gyro", scanFolderName + ".rot");
+                mFileStreamer.addFileWriter("gyro_raw", scanFolderName + ".rot_raw");
 //                mFileStreamer.addFile("gyro_uncalib", "gyro_uncalib.txt");
                 mFileStreamer.addFile("acce", scanFolderName + ".acce");
 //                mFileStreamer.addFile("linacce", "linacce.txt");
@@ -143,7 +144,6 @@ public class IMUSession implements SensorEventListener {
             }
 
         }
-
         mIsRecording.set(true);
     }
 
@@ -198,7 +198,7 @@ public class IMUSession implements SensorEventListener {
             switch (event.sensor.getType()) {
                 case Sensor.TYPE_ACCELEROMETER:
                     if (mIsRecording.get() && mIsWritingFile.get()) {
-                        mFileStreamer.addRecord(timestamp, "acce", 3, event.values);
+                        mFileStreamer.addRecord(timestamp, "acce", 3, event.values, "byte");
                         mSensorCounter.put("acce", mSensorCounter.get("acce") + 1);
                     }
                     break;
@@ -206,7 +206,8 @@ public class IMUSession implements SensorEventListener {
                 case Sensor.TYPE_GYROSCOPE:
                     if (mIsRecording.get() && mIsWritingFile.get()) {
 //                        Log.i("imuSession", String.format("record gyro data %s", event.values.toString()));
-                        mFileStreamer.addRecord(timestamp, "gyro", 3, event.values);
+                        mFileStreamer.addRecord(timestamp, "gyro", 3, event.values, "byte");
+                        mFileStreamer.addRecord(timestamp, "gyro_raw", 3, event.values, "raw");
                         mSensorCounter.put("gyro", mSensorCounter.get("gyro") + 1);
                     }
                     break;
@@ -219,7 +220,7 @@ public class IMUSession implements SensorEventListener {
 
                 case Sensor.TYPE_GRAVITY:
                     if (mIsRecording.get() && mIsWritingFile.get()) {
-                        mFileStreamer.addRecord(timestamp, "gravity", 3, event.values);
+                        mFileStreamer.addRecord(timestamp, "gravity", 3, event.values, "byte");
                         mSensorCounter.put("gravity", mSensorCounter.get("gravity") + 1);
                     }
                     break;
@@ -233,7 +234,7 @@ public class IMUSession implements SensorEventListener {
 
                 case Sensor.TYPE_ROTATION_VECTOR:
                     if (mIsRecording.get() && mIsWritingFile.get()) {
-                        mFileStreamer.addRecord(timestamp, "rv", 4, event.values);
+                        mFileStreamer.addRecord(timestamp, "rv", 4, event.values, "byte");
                         mSensorCounter.put("rv", mSensorCounter.get("rv") + 1);
                     }
                     break;
@@ -246,7 +247,7 @@ public class IMUSession implements SensorEventListener {
 
                 case Sensor.TYPE_MAGNETIC_FIELD:
                     if (mIsRecording.get() && mIsWritingFile.get()) {
-                        mFileStreamer.addRecord(timestamp, "magnet", 3, event.values);
+                        mFileStreamer.addRecord(timestamp, "magnet", 3, event.values, "byte");
                         mSensorCounter.put("magnet", mSensorCounter.get("magnet") + 1);
                     }
                     break;
@@ -287,7 +288,7 @@ public class IMUSession implements SensorEventListener {
                     mAcceBias[1] = event.values[4];
                     mAcceBias[2] = event.values[5];
                     if (mIsRecording.get() && mIsWritingFile.get()) {
-                        mFileStreamer.addRecord(timestamp, "acce", 3, event.values);
+                        mFileStreamer.addRecord(timestamp, "acce", 3, event.values, "byte");
                         mSensorCounter.put("acce", mSensorCounter.get("acce") + 1);
                     }
                     break;

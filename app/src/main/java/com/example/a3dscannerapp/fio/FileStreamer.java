@@ -7,6 +7,8 @@ import android.util.Log;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -22,6 +24,7 @@ public class FileStreamer {
     private Context mContext;
 
     private HashMap<String, BufferedWriter> mFileWriters = new HashMap<>();
+    private HashMap<String, File> mFiles = new HashMap<>();
     private String mOutputFolder;
 
     public FileStreamer(Context context, final String outputFolder){
@@ -29,7 +32,7 @@ public class FileStreamer {
         mOutputFolder = outputFolder;
     }
 
-    public void addFile(final String writerId, final String fileName) throws IOException {
+    public void addFileWriter(final String writerId, final String fileName) throws IOException {
         if(mFileWriters.containsKey(writerId)){
             Log.w(LOG_TAG, "File writer" + writerId + " already exist");
             return;
@@ -38,6 +41,15 @@ public class FileStreamer {
         String header = "# Created at " + file_timestamp.getTime().toString() + "\n";
         BufferedWriter newWriter = createFile(mOutputFolder + "/" + fileName, header);
         mFileWriters.put(writerId, newWriter);
+    }
+
+    public void addFile(final String writerId, final String fileName) throws IOException {
+        if(mFileWriters.containsKey(writerId)){
+            Log.w(LOG_TAG, "File" + writerId + " already exist");
+            return;
+        }
+        File file = new File(mOutputFolder, fileName);
+        mFiles.put(writerId, file);
     }
 
     private BufferedWriter createFile(String path, String header) throws IOException {
@@ -61,19 +73,65 @@ public class FileStreamer {
         return mFileWriters.get(writerId);
     }
 
-    public void addRecord(long timestamp, String writerId, int numValues, final float[] values) throws IOException, KeyException {
+    public File getFile(final String writerId) {
+        return mFiles.get(writerId);
+    }
+
+    public void addRecord(long timestamp, String writerId, int numValues, final float[] values, final String type) throws IOException, KeyException {
         synchronized (this){
-            BufferedWriter writer = getFileWriter(writerId);
-            if (writer == null){
-                throw new KeyException("File writer " + writerId + " not found");
+            if (type.equals("byte")) {
+                File file= getFile(writerId);
+                if (file == null){
+                    throw new KeyException("File writer " + writerId + " not found");
+                }
+
+                FileOutputStream fos = null;
+                try {
+                    fos = new FileOutputStream(file, true);
+
+                    // Writes bytes from the specified byte array to this file output stream
+                    byte[] time_bytes = ByteBuffer.allocate(SENSOR_BYTE_LENGTH).putLong(timestamp).array();
+                    fos.write(time_bytes);
+                    for(float val:values) {
+                        byte[] data_bytes = ByteBuffer.allocate(SENSOR_BYTE_LENGTH).putDouble((double)val).array();
+                        fos.write(data_bytes);
+                    }
+
+                }
+                catch (FileNotFoundException e) {
+                    System.out.println("File not found" + e);
+                }
+                catch (IOException ioe) {
+                    System.out.println("Exception while writing file " + ioe);
+                }
+                finally {
+                    // close the streams using close method
+                    try {
+                        if (fos != null) {
+                            fos.close();
+                        }
+                    }
+                    catch (IOException ioe) {
+                        System.out.println("Error while closing stream: " + ioe);
+                    }
+
+                }
             }
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.append(ByteBuffer.allocate(SENSOR_BYTE_LENGTH).putLong(timestamp).array().toString());
-            for(int i=0; i<numValues; ++i){
-                stringBuilder.append(ByteBuffer.allocate(SENSOR_BYTE_LENGTH).putFloat(values[i]).array().toString());
+            else {
+                // raw output
+                BufferedWriter writer = getFileWriter(writerId);
+                if (writer == null){
+                    throw new KeyException("File writer " + writerId + " not found");
+                }
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append(timestamp);
+                for(int i=0; i<numValues; ++i){
+                    stringBuilder.append(String.format(Locale.US, " %.6f", values[i]));
+                }
+                stringBuilder.append("\n");
+                writer.write(stringBuilder.toString());
             }
-            stringBuilder.append("\n");
-            writer.write(stringBuilder.toString());
+
         }
     }
 
