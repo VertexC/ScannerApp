@@ -24,7 +24,7 @@ public class FileStreamer {
     private Context mContext;
 
     private HashMap<String, BufferedWriter> mFileWriters = new HashMap<>();
-    private HashMap<String, File> mFiles = new HashMap<>();
+    public HashMap<String, File> mFiles = new HashMap<>();
     private String mOutputFolder;
 
     public FileStreamer(Context context, final String outputFolder){
@@ -38,8 +38,7 @@ public class FileStreamer {
             return;
         }
         Calendar file_timestamp = Calendar.getInstance();
-        String header = "# Created at " + file_timestamp.getTime().toString() + "\n";
-        BufferedWriter newWriter = createFile(mOutputFolder + "/" + fileName, header);
+        BufferedWriter newWriter = createFile(mOutputFolder + "/" + fileName, "");
         mFileWriters.put(writerId, newWriter);
     }
 

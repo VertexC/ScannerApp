@@ -38,9 +38,9 @@ public class IMUSession implements SensorEventListener {
     private HashMap<String, Sensor> mSensors = new HashMap<>();
     private SensorManager mSensorManager;
     private float mInitialStepCount = -1;
-    private FileStreamer mFileStreamer = null;
+    public FileStreamer mFileStreamer = null;
 
-    private AtomicBoolean mIsRecording = new AtomicBoolean(false);
+    public AtomicBoolean mIsRecording = new AtomicBoolean(false);
     private AtomicBoolean mIsWritingFile = new AtomicBoolean(false);
 
 
@@ -188,10 +188,14 @@ public class IMUSession implements SensorEventListener {
 //            }
 
             mIsWritingFile.set(false);
-            mFileStreamer = null;
+//            mFileStreamer = null;
         }
 
         mInitialStepCount = -1;
+    }
+
+    public void resetSession() {
+        mFileStreamer = null;
     }
 
     @Override

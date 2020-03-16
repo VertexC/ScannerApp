@@ -56,9 +56,15 @@ import org.json.JSONException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -129,6 +135,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
                     mRecordImageButton.setImageResource(R.mipmap.btn_video_online_foreground);
                     mMediaRecorder.stop();
                     mMediaRecorder.reset();
+//                    mIMUSession.mIsRecording.set(false);
                     mIMUSession.stopSession();
 
 //                    AsyncTask.execute(new Runnable() {
@@ -145,6 +152,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
 
                     startPreview();
                     saveMetaData();
+                    mIMUSession.resetSession();
                 } else {
                     try {
                         if (checkWriteStoragePermission()) {
@@ -423,6 +431,39 @@ public class VideoCaptureActivity extends AppCompatActivity {
             imu.put("id", imuIdMap.get(name)+"_1");
             imu.put("type", imuTypeMap.get(name)+"_1");
             sensors.add(imu);
+            // add header
+            // FIXME: don't harcode numValuesPerFrame
+            int numValuesPerFrame = 3;
+            File originFile = mIMUSession.mFileStreamer.getFile(name);
+            String originFilePath = originFile.getAbsolutePath();
+
+            String header = "#" + name + " " + mIMUSession.mSensorCounter.get(name).toString() + " " + numValuesPerFrame + " " +  "big" + "\n";
+            File finalFile = new File(originFilePath + ".temp");
+
+            try {
+                Writer writer = new FileWriter(finalFile.getAbsolutePath());
+                writer.write(header);
+                writer.close();
+            }
+            catch (IOException e){
+                e.printStackTrace();
+            }
+
+            try {
+                OutputStream os = new FileOutputStream(finalFile, true);
+                InputStream is = new FileInputStream(originFile);
+                byte[] buffer = new byte[0xFFFF];
+                for (int len = is.read(buffer); len != -1; len = is.read(buffer)) {
+                    os.write(buffer, 0, len);
+                }
+                os.close();
+            }
+            catch (IOException e){
+                e.printStackTrace();
+            }
+            // remove the original file
+            originFile.delete();
+            finalFile.renameTo(new File(originFilePath));
 
         }
         root.put("stream", sensors);
