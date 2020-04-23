@@ -11,7 +11,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.security.KeyException;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -37,18 +39,20 @@ public class FileStreamer {
             Log.w(LOG_TAG, "File writer" + writerId + " already exist");
             return;
         }
-        Calendar file_timestamp = Calendar.getInstance();
         BufferedWriter newWriter = createFile(mOutputFolder + "/" + fileName, "");
         mFileWriters.put(writerId, newWriter);
     }
 
-    public void addFile(final String writerId, final String fileName) throws IOException {
+    public void addFile(final String writerId, final String fileName, boolean addWriter) throws IOException {
         if(mFileWriters.containsKey(writerId)){
             Log.w(LOG_TAG, "File" + writerId + " already exist");
             return;
         }
         File file = new File(mOutputFolder, fileName);
         mFiles.put(writerId, file);
+        if(addWriter){
+            addFileWriter(writerId, fileName);
+        }
     }
 
     private BufferedWriter createFile(String path, String header) throws IOException {
@@ -79,6 +83,7 @@ public class FileStreamer {
     public void addRecord(long timestamp, String writerId, int numValues, final float[] values, final String type) throws IOException, KeyException {
         synchronized (this){
             if (type.equals("byte")) {
+
                 File file= getFile(writerId);
                 if (file == null){
                     throw new KeyException("File writer " + writerId + " not found");
@@ -87,15 +92,16 @@ public class FileStreamer {
                 FileOutputStream fos = null;
                 try {
                     fos = new FileOutputStream(file, true);
-
                     // Writes bytes from the specified byte array to this file output stream
-                    byte[] time_bytes = ByteBuffer.allocate(SENSOR_BYTE_LENGTH).putLong(timestamp).array();
-                    fos.write(time_bytes);
-                    for(float val:values) {
-                        byte[] data_bytes = ByteBuffer.allocate(SENSOR_BYTE_LENGTH).putDouble((double)val).array();
+                    ByteBuffer time_bytes = ByteBuffer.allocate(SENSOR_BYTE_LENGTH);
+                    time_bytes.order(ByteOrder.BIG_ENDIAN);
+                    time_bytes.putLong(timestamp);
+                    fos.write(time_bytes.array());
+                    for(int i=0; i<numValues; i++) {
+                        float val = values[i];
+                        byte[] data_bytes = ByteBuffer.allocate(SENSOR_BYTE_LENGTH).order(ByteOrder.BIG_ENDIAN).putDouble((double)val).array();
                         fos.write(data_bytes);
                     }
-
                 }
                 catch (FileNotFoundException e) {
                     System.out.println("File not found" + e);
@@ -113,7 +119,6 @@ public class FileStreamer {
                     catch (IOException ioe) {
                         System.out.println("Error while closing stream: " + ioe);
                     }
-
                 }
             }
             else {
@@ -125,7 +130,7 @@ public class FileStreamer {
                 StringBuilder stringBuilder = new StringBuilder();
                 stringBuilder.append(timestamp);
                 for(int i=0; i<numValues; ++i){
-                    stringBuilder.append(String.format(Locale.US, " %.6f", values[i]));
+                    stringBuilder.append(" " + Double.toString((double)values[i]));
                 }
                 stringBuilder.append("\n");
                 writer.write(stringBuilder.toString());

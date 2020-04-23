@@ -87,4 +87,28 @@ public class Util {
             return choices[0];
         }
     }
+
+    public static String makePlyHeader(String type, String name, int numOfElement, boolean asciiFlag) {
+        String header = "ply\n";
+        if (type == "imu") {
+            // header for imu sensor data
+            if(asciiFlag) {
+                header += "format ascii 1.0\n";
+            }
+            else {
+                header += "format binary_big_endian 1.0\n";
+            }
+            header += "element " + name + " " + numOfElement + "\n";
+            header += "comment imu sensor data with timestamp\n";
+            if (name == "orientation") {
+                header += "property uint64 timestamp\nproperty double roll\nproperty double pitch\nproperty double yall\n";
+            }
+            else {
+                header += "property uint64 timestamp\nproperty double x\nproperty double y\nproperty double z\n";
+            }
+        }
+        header += "end_header\n";
+
+        return header;
+    }
 }

@@ -54,12 +54,16 @@ public class IMUSession implements SensorEventListener {
     private float[] mMagnetBias = new float[3];
     private float[] mAcceBias = new float[3];
 
+    public String[] ids = {"gyro", "acce", "gravity", "magnet", "orientation"};
+    public HashMap<String, String> shortNames = new HashMap<>();
+    public HashMap<String, String> fullNames = new HashMap<>();
+
+
     public IMUSession(VideoCaptureActivity context){
         mContext = context;
         mSensorManager = (SensorManager)mContext.getSystemService(Context.SENSOR_SERVICE);
 
         mSensors.put("gyro", mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE));
-        mSensors.put("gyro_uncalib", mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE_UNCALIBRATED));
         // Some phones (e.g. Pixel 2XL) automatically calibration accelerometer bias. For unified
         // processing framework, we use uncalibration acceleroemter and provide external calibration.
         if(Build.VERSION.SDK_INT < 26){
@@ -69,17 +73,23 @@ public class IMUSession implements SensorEventListener {
             Log.i(LOG_TAG, String.format(Locale.US, "API level: %d, Accelermeter_uncalibrated used.", Build.VERSION.SDK_INT));
             mSensors.put("acce", mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED));
         }
-        mSensors.put("linacce", mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION));
+        
         mSensors.put("gravity", mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY));
         mSensors.put("magnet", mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD));
-        mSensors.put("magnet_uncalib", mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED));
-        mSensors.put("rv", mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR));
-        mSensors.put("game_rv", mSensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR));
-        mSensors.put("magnetic_rv", mSensorManager.getDefaultSensor(Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR));
-        mSensors.put("step", mSensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER));
-        mSensors.put("pressure", mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE));
         mSensors.put("orientation", mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION));
         registerSensors();
+
+        shortNames.put("gyro", "rot");
+        shortNames.put("acce", "acce");
+        shortNames.put("gravity", "grav");
+        shortNames.put("magnet", "mag");
+        shortNames.put("orientation", "atti");
+
+        fullNames.put("gyro", "rotation");
+        fullNames.put("acce", "accelerometer");
+        fullNames.put("gravity", "gravity");
+        fullNames.put("magnet", "magnet");
+        fullNames.put("orientation", "attitude");
     }
 
     public void registerSensors(){
@@ -113,35 +123,19 @@ public class IMUSession implements SensorEventListener {
     public void startSession(String streamFolder, final String scanFolderName){
         if (streamFolder != null){
             mFileStreamer = new FileStreamer(mContext, streamFolder);
+            mSensorCounter.clear();
             try {
-                mFileStreamer.addFile("gyro", scanFolderName + ".rot");
-                mFileStreamer.addFileWriter("gyro_raw", scanFolderName + ".rot_raw");
-//                mFileStreamer.addFile("gyro_uncalib", "gyro_uncalib.txt");
-                mFileStreamer.addFile("acce", scanFolderName + ".acce");
-//                mFileStreamer.addFile("linacce", "linacce.txt");
-                mFileStreamer.addFile("gravity", scanFolderName + ".grav");
-                mFileStreamer.addFile("magnet", scanFolderName + ".mag");
-//                mFileStreamer.addFile("rv", scanFolderName + ".atti");
-                mFileStreamer.addFile("orientation", scanFolderName + ".atti");
+                for(String id:ids) {
+                    mFileStreamer.addFile(id, scanFolderName + "." + shortNames.get(id), true);
+                    mFileStreamer.addFile(id + "_ascii", scanFolderName + "." + shortNames.get(id) + "_ascii", true);
+                    mSensorCounter.put(id, 0);
+                    mSensorCounter.put(id + "_ascii", 0);
+                }
 
-//                mFileStreamer.addFile("game_rv", "game_rv.txt");
-//                mFileStreamer.addFile("magnetic_rv", "magnetic_rv.txt");
-//                mFileStreamer.addFile("step", "step.txt");
-//                mFileStreamer.addFile("pressure", "pressure.txt");
-//                mFileStreamer.addFile("gyro_bias", "gyro_bias.txt");
                 mIsWritingFile.set(true);
 
-                mSensorCounter.clear();
 //                mSensorFrequency.clear();
 //                mSensorLastTime.clear();
-
-                mSensorCounter.put("gyro", 0);
-                mSensorCounter.put("acce", 0);
-                mSensorCounter.put("gravity", 0);
-                mSensorCounter.put("magnet", 0);
-//                mSensorCounter.put("rv", 0);
-                mSensorCounter.put("orientation", 0);
-
 
             } catch (IOException e){
                 mContext.showToast("Error occurs when creating output IMU files.");
@@ -188,6 +182,11 @@ public class IMUSession implements SensorEventListener {
 //            }
 
             mIsWritingFile.set(false);
+            try {
+                mFileStreamer.endFiles();
+            } catch (IOException e){
+                e.printStackTrace();
+            }
 //            mFileStreamer = null;
         }
 
@@ -208,7 +207,10 @@ public class IMUSession implements SensorEventListener {
                 case Sensor.TYPE_ACCELEROMETER:
                     if (mIsRecording.get() && mIsWritingFile.get()) {
                         mFileStreamer.addRecord(timestamp, "acce", 3, event.values, "byte");
+                        mFileStreamer.addRecord(timestamp, "acce_ascii", 3, event.values, "raw");
                         mSensorCounter.put("acce", mSensorCounter.get("acce") + 1);
+                        mSensorCounter.put("acce_ascii", mSensorCounter.get("acce_ascii") + 1);
+
                     }
                     break;
 
@@ -216,87 +218,41 @@ public class IMUSession implements SensorEventListener {
                     if (mIsRecording.get() && mIsWritingFile.get()) {
 //                        Log.i("imuSession", String.format("record gyro data %s", event.values.toString()));
                         mFileStreamer.addRecord(timestamp, "gyro", 3, event.values, "byte");
-                        mFileStreamer.addRecord(timestamp, "gyro_raw", 3, event.values, "raw");
+                        mFileStreamer.addRecord(timestamp, "gyro_ascii", 3, event.values, "raw");
                         mSensorCounter.put("gyro", mSensorCounter.get("gyro") + 1);
+                        mSensorCounter.put("gyro_ascii", mSensorCounter.get("gyro_ascii") + 1);
                     }
                     break;
-
-//                case Sensor.TYPE_LINEAR_ACCELERATION:
-//                    if (mIsRecording.get() && mIsWritingFile.get()) {
-//                        mFileStreamer.addRecord(timestamp, "linacce", 3, event.values);
-//                    }
-//                    break;
 
                 case Sensor.TYPE_GRAVITY:
                     if (mIsRecording.get() && mIsWritingFile.get()) {
                         mFileStreamer.addRecord(timestamp, "gravity", 3, event.values, "byte");
+                        mFileStreamer.addRecord(timestamp, "gravity_ascii", 3, event.values, "raw");
+
                         mSensorCounter.put("gravity", mSensorCounter.get("gravity") + 1);
+                        mSensorCounter.put("gravity_ascii", mSensorCounter.get("gravity_ascii") + 1);
                     }
                     break;
-//
-//                case Sensor.TYPE_GAME_ROTATION_VECTOR:
-//                    if (mIsRecording.get() && mIsWritingFile.get()) {
-//                        mFileStreamer.addRecord(timestamp, "game_rv", 4, event.values);
-//                    }
-//
-//                    break;
 
-//                case Sensor.TYPE_ROTATION_VECTOR:
-//                    if (mIsRecording.get() && mIsWritingFile.get()) {
-//                        mFileStreamer.addRecord(timestamp, "rv", 4, event.values, "byte");
-//                        mSensorCounter.put("rv", mSensorCounter.get("rv") + 1);
-//                    }
-//                    break;
                 case Sensor.TYPE_ORIENTATION:
                     if (mIsRecording.get() && mIsWritingFile.get()) {
                         mFileStreamer.addRecord(timestamp, "orientation", 3, event.values, "byte");
+                        mFileStreamer.addRecord(timestamp, "orientation_ascii", 3, event.values, "raw");
                         mSensorCounter.put("orientation", mSensorCounter.get("orientation") + 1);
+                        mSensorCounter.put("orientation_ascii", mSensorCounter.get("orientation_ascii") + 1);
+
                     }
                     break;
-
-//                case Sensor.TYPE_GEOMAGNETIC_ROTATION_VECTOR:
-//                    if (mIsRecording.get() && mIsWritingFile.get()) {
-//                        mFileStreamer.addRecord(timestamp, "magnetic_rv", 4, event.values);
-//                    }
-//                    break;
 
                 case Sensor.TYPE_MAGNETIC_FIELD:
                     if (mIsRecording.get() && mIsWritingFile.get()) {
                         mFileStreamer.addRecord(timestamp, "magnet", 3, event.values, "byte");
+                        mFileStreamer.addRecord(timestamp, "magnet_ascii", 3, event.values, "raw");
                         mSensorCounter.put("magnet", mSensorCounter.get("magnet") + 1);
+                        mSensorCounter.put("magnet_ascii", mSensorCounter.get("magnet_ascii") + 1);
+
                     }
                     break;
-
-//                case Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED:
-//                    mMagnetBias[0] = event.values[3];
-//                    mMagnetBias[1] = event.values[4];
-//                    mMagnetBias[2] = event.values[5];
-//                    break;
-
-//                case Sensor.TYPE_STEP_COUNTER:
-//                    if (mInitialStepCount < 0) {
-//                        mInitialStepCount = event.values[0] - 1;
-//                    }
-//                    values[0] = event.values[0] - mInitialStepCount;
-//                    if (mIsRecording.get() && mIsWritingFile.get()) {
-//                        mFileStreamer.addRecord(timestamp, "step", 1, values);
-//                    }
-//                    break;
-
-//                case Sensor.TYPE_PRESSURE:
-//                    if (mIsRecording.get() && mIsWritingFile.get()) {
-//                        mFileStreamer.addRecord(timestamp, "pressure", 1, event.values);
-//                    }
-//                    break;
-
-//                case Sensor.TYPE_GYROSCOPE_UNCALIBRATED:
-//                    mGyroBias[0] = event.values[3];
-//                    mGyroBias[1] = event.values[4];
-//                    mGyroBias[2] = event.values[5];
-//                    if (mIsRecording.get() && mIsWritingFile.get()) {
-//                        mFileStreamer.addRecord(timestamp, "gyro_uncalib", 3, event.values);
-//                    }
-//                    break;
 
                 case Sensor.TYPE_ACCELEROMETER_UNCALIBRATED:
                     mAcceBias[0] = event.values[3];
@@ -304,7 +260,9 @@ public class IMUSession implements SensorEventListener {
                     mAcceBias[2] = event.values[5];
                     if (mIsRecording.get() && mIsWritingFile.get()) {
                         mFileStreamer.addRecord(timestamp, "acce", 3, event.values, "byte");
+                        mFileStreamer.addRecord(timestamp, "acce_ascii", 3, event.values, "raw");
                         mSensorCounter.put("acce", mSensorCounter.get("acce") + 1);
+                        mSensorCounter.put("acce_ascii", mSensorCounter.get("acce_ascii") + 1);
                     }
                     break;
             }
