@@ -420,17 +420,22 @@ public class VideoCaptureActivity extends AppCompatActivity {
                 // add header
                 File originFile = mIMUSession.mFileStreamer.getFile(name);
 
+                if(!preferences.getBoolean("debug_flag", false) && suffix.equals("_ascii")) {
+                    originFile.delete();
+                    originFile = null;
+                }
+
                 if(originFile == null) {
                     continue;
                 }
+
 
                 String originFilePath = originFile.getAbsolutePath();
 
                 String header;
                 if (suffix.equals("_ascii")) {
                     header = Util.makePlyHeader("imu", mIMUSession.fullNames.get(id), mIMUSession.mSensorCounter.get(name), true);
-                }
-                else {
+                } else {
                     header = Util.makePlyHeader("imu", mIMUSession.fullNames.get(id), mIMUSession.mSensorCounter.get(name), false);
                 }
 
@@ -440,8 +445,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
                     Writer writer = new FileWriter(finalFile.getAbsolutePath());
                     writer.write(header);
                     writer.close();
-                }
-                catch (IOException e){
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
 
@@ -453,8 +457,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
                         os.write(buffer, 0, len);
                     }
                     os.close();
-                }
-                catch (IOException e){
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
                 // remove the original file

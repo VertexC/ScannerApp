@@ -1,6 +1,7 @@
 package com.example.a3dscannerapp;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.CheckBoxPreference;
 import androidx.preference.EditTextPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
@@ -41,12 +42,17 @@ public class PreferenceActivity extends AppCompatActivity {
                     String user_name = prefs.getString("user_name", "");
                     mUserNamePreference.setSummary(user_name);
                 }
+                if(key.equals("debug_flag")) {
+                    boolean debug_flag = prefs.getBoolean("debug_flag", false);
+                    mDebugPreference.setChecked(debug_flag);
+                }
             }
         };
 
         EditTextPreference mUploadUrlPreference;
         EditTextPreference mDeviceNamePreference;
         EditTextPreference mUserNamePreference;
+        CheckBoxPreference mDebugPreference;
         Preference mFeedbackPreference;
 
         @Override
@@ -68,12 +74,17 @@ public class PreferenceActivity extends AppCompatActivity {
             mDeviceNamePreference.setTitle("Device Name(*)");
             mDeviceNamePreference.setSummary(device_name);
 
+            mDebugPreference = new CheckBoxPreference(context);
+            boolean debugPreference = preferences.getBoolean("debug_flag", false);
+            mDebugPreference.setKey("debug_flag");
+            mDebugPreference.setChecked(debugPreference);
+            mDebugPreference.setTitle("Debug");
+
             mUserNamePreference = new EditTextPreference(context);
             String user_name = preferences.getString("user_name", "e.g. Bowen Chen");
             mUserNamePreference.setKey("user_name");
             mUserNamePreference.setTitle("User Name(*)");
             mUserNamePreference.setSummary(user_name);
-
 
             mFeedbackPreference = new Preference(context);
             mFeedbackPreference.setKey("feedback");
@@ -84,7 +95,7 @@ public class PreferenceActivity extends AppCompatActivity {
             screen.addPreference(mDeviceNamePreference);
             screen.addPreference(mUserNamePreference);
             screen.addPreference(mFeedbackPreference);
-
+            screen.addPreference(mDebugPreference);
             setPreferenceScreen(screen);
         }
 
