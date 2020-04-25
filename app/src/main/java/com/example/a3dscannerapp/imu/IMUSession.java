@@ -13,17 +13,9 @@ import android.os.Environment;
 import android.util.Log;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import com.example.a3dscannerapp.MainActivity;
-import com.example.a3dscannerapp.MultiCameraVideoCaptureActivity;
 import com.example.a3dscannerapp.VideoCaptureActivity;
 import com.example.a3dscannerapp.fio.FileStreamer;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.security.KeyException;
@@ -45,8 +37,6 @@ public class IMUSession implements SensorEventListener {
 
 
     public HashMap<String, Integer> mSensorCounter = new HashMap<>();
-//    private HashMap<String, Float> mSensorFrequency = new HashMap<>();
-//    private HashMap<String, Long> mSensorLastTime = new HashMap<>();
 
     public static final int mFrequency = 100;
 
@@ -134,9 +124,6 @@ public class IMUSession implements SensorEventListener {
 
                 mIsWritingFile.set(true);
 
-//                mSensorFrequency.clear();
-//                mSensorLastTime.clear();
-
             } catch (IOException e){
                 mContext.showToast("Error occurs when creating output IMU files.");
                 e.printStackTrace();
@@ -150,36 +137,6 @@ public class IMUSession implements SensorEventListener {
         mIsRecording.set(false);
 
         if(mIsWritingFile.get()){
-//            try{
-//                BufferedWriter gyro_bias_end_writer = mFileStreamer.getFileWriter("gyro_bias");
-//                gyro_bias_end_writer.write(String.format(Locale.US, "%f %f %f", mGyroBias[0], mGyroBias[1], mGyroBias[2]));
-//                mFileStreamer.endFiles();
-//            } catch (IOException e){
-//                mContext.showToast("Error occurs when finishing IMU files.");
-//                e.printStackTrace();
-//            }
-
-            // If the accelerometer calibration file is found in the Download folder, copy it to
-            // the streaming folder.
-//            try{
-//                File acce_calib_file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/acce_calib.txt");
-//                File out_acce_calib_file = new File(mFileStreamer.getOutputFolder() + "/acce_calib.txt");
-//                if (acce_calib_file.exists()){
-//                    FileInputStream istr = new FileInputStream(acce_calib_file);
-//                    FileOutputStream ostr = new FileOutputStream(out_acce_calib_file);
-//                    FileChannel ichn = istr.getChannel();
-//                    FileChannel ochn = ostr.getChannel();
-//                    ichn.transferTo(0, ichn.size(), ochn);
-//                    istr.close();
-//                    ostr.close();
-//
-//                    Intent scanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-//                    scanIntent.setData(Uri.fromFile(out_acce_calib_file));
-//                    mContext.sendBroadcast(scanIntent);
-//                }
-//            } catch (IOException e){
-//                e.printStackTrace();
-//            }
 
             mIsWritingFile.set(false);
             try {

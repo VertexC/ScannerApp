@@ -1,47 +1,11 @@
 package com.example.a3dscannerapp;
 
-import android.app.Activity;
-import android.app.UiAutomation;
 import android.os.Environment;
-import android.os.FileUtils;
-import android.util.Log;
 import android.util.Size;
-import android.widget.Toast;
 
-import androidx.appcompat.view.menu.ActionMenuItem;
-
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Comparator;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.http.Url;
 
 public class Util {
 
