@@ -10,6 +10,9 @@ This is the Android ScannerApp for ScanNet.
 ## User Guide
 You can find user instructions [here](https://docs.google.com/document/d/11eYY-jwGs3JQIrlqCW0JUCnOxLEHJJx-Pz4gFKXpcQM/edit?usp=sharing).
 
+# Documentation
+[Code Doc](https://docs.google.com/document/d/1Y2aDU6N3Rupj8FGcnZNyyrGilniN-06PLEMYho83Szw/edit?usp=sharing)
+
 ## How to use
 You can download the apk from [here](https://drive.google.com/open?id=1KZLzXMf1lYieVskXnzhPuXwZLxmXmIDV). 
 Or git clone the repo and rebuild in Android Studio
