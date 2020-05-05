@@ -40,8 +40,6 @@ public class IMUSession implements SensorEventListener {
 
     public static final int mFrequency = 100;
 
-    private float[] mGyroBias = new float[3];
-    private float[] mMagnetBias = new float[3];
     private float[] mAcceBias = new float[3];
 
     public String[] ids = {"gyro", "acce", "gravity", "magnet", "orientation"};
@@ -96,18 +94,6 @@ public class IMUSession implements SensorEventListener {
     }
     public boolean isRecording(){
         return mIsRecording.get();
-    }
-
-    public float[] getGyroBias(){
-        return mGyroBias;
-    }
-
-    public float[] getMagnetBias(){
-        return mMagnetBias;
-    }
-
-    public float[] getAcceBias(){
-        return mAcceBias;
     }
 
     public void startSession(String streamFolder, final String scanFolderName){

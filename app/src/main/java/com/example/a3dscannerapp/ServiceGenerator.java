@@ -15,9 +15,6 @@ public class ServiceGenerator {
 
     private Retrofit.Builder mBuilder;
 
-    private OkHttpClient.Builder httpClient =
-            new OkHttpClient.Builder();
-
     private OkHttpClient.Builder longTimeOutHttpClient = new OkHttpClient.Builder()
             .readTimeout(120, TimeUnit.SECONDS)
             .connectTimeout(120, TimeUnit.SECONDS);

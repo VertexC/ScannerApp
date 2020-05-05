@@ -32,7 +32,7 @@ public class Util {
     }
 
     private static Size chooseOptimalSize(Size[] choices, int width, int height) {
-        // FIXME: what does this means?
+        // FIXME: really needed?
         Size bigEnough = null;
         int minAreaDiff = Integer.MAX_VALUE;
         for (Size option : choices) {

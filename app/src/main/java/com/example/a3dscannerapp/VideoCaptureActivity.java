@@ -135,7 +135,6 @@ public class VideoCaptureActivity extends AppCompatActivity {
                     mRecordImageButton.setImageResource(R.mipmap.btn_video_online_foreground);
                     mMediaRecorder.stop();
                     mMediaRecorder.reset();
-//                    mIMUSession.mIsRecording.set(false);
                     mIMUSession.stopSession();
 
 //                    AsyncTask.execute(new Runnable() {
@@ -158,8 +157,6 @@ public class VideoCaptureActivity extends AppCompatActivity {
                         if (checkWriteStoragePermission()) {
 
                             askForInputAndStartRecord();
-                            // startRecord();
-//                            mMediaRecorder.start();
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -204,18 +201,7 @@ public class VideoCaptureActivity extends AppCompatActivity {
         public void onOpened(@NonNull CameraDevice camera) {
             mCameraDevice = camera;
             showToast("Camera connection Made!");
-//            if(mIsRecording) {
-//                try {
-//                    createVideoFileName();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-////                askForInputAndStartRecord();
-//                startRecord();
-//                mMediaRecorder.start();
-//            } else {
-//                startPreview();
-//            }
+
             if(!mIsRecording) {
                 startPreview();
             }
@@ -759,8 +745,6 @@ public class VideoCaptureActivity extends AppCompatActivity {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     == PackageManager.PERMISSION_GRANTED) {
-//                mIsRecording = true;
-//                mRecordImageButton.setImageResource(R.mipmap.btn_video_offline_foreground);
                 createVideoFolder();
                 createVideoFileName();
                 return true;
@@ -774,12 +758,8 @@ public class VideoCaptureActivity extends AppCompatActivity {
                 return false;
             }
         } else {
-//            mIsRecording = true;
-//            mRecordImageButton.setImageResource(R.mipmap.btn_video_offline_foreground);
             createVideoFolder();
             createVideoFileName();
-//            startRecord();
-//            mMediaRecorder.start();
             return true;
         }
     }

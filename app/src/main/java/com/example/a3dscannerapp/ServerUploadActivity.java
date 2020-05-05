@@ -223,13 +223,6 @@ public class ServerUploadActivity extends AppCompatActivity {
             return "Cannot read the file!";
         }
 
-//        // create RequestBody instance from file
-//        RequestBody requestBody =
-//                RequestBody.create(
-//                        MediaType.parse("application/octet-stream"),
-//                        buf
-//                );
-
         // finally, execute the request
         trustAllCertificates();
 

@@ -138,16 +138,6 @@ public class GalleryActivity extends AppCompatActivity {
                         if(isVideoFile(videoFile.getAbsolutePath())){
                             createGalleryRow(folderName, inFile1.getAbsolutePath());
                         }
-//                        File videoFile = null;
-//                        for (File inFile2 : inFile1.listFiles()) {
-//                            if (isVideoFile(inFile2.getAbsolutePath())) {
-//                                videoFile = inFile2;
-//                                break;
-//                            }
-//                        }
-//                        if (videoFile != null) {
-//                            createGalleryRow(videoFile, appFilesFolder);
-//                        }
                     }
                 }
             }
